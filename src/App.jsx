@@ -30,6 +30,19 @@ function App() {
   const [records, setRecords] = useLocalStorage('gym-records', []);
   const [visitLog, setVisitLog] = useLocalStorage('gym-visit-log', []);
   const [currentVisit, setCurrentVisit] = useLocalStorage('gym-current-visit', null);
+  const [user, setUser] = useState(null); // Demo user state
+  const [authView, setAuthView] = useState('login');
+
+  // Demo Auth Functions
+  const handleDemoLogin = (email, password) => {
+    setUser({ email, uid: 'demo-user-123' });
+    setView('home');
+  };
+
+  const handleDemoLogout = () => {
+    setUser(null);
+    setView('home');
+  };
 
   // Use a ref to prevent infinite loop
   const hasFixedRef = React.useRef(false);
@@ -93,9 +106,14 @@ function App() {
     <div className="app-container">
       <header className="app-header">
         <h1>ジムトラッカー</h1>
+        {user && <button className="btn-logout" onClick={handleDemoLogout}>ログアウト</button>}
       </header>
 
       <main className="app-main">
+        {!user ? (
+          <AuthView view={authView} setView={setAuthView} onLogin={handleDemoLogin} />
+        ) : (
+          <>
         {view === 'home' && (
           <div className="view-home animate-fade">
             <section className="status-section glass-card">
@@ -104,8 +122,14 @@ function App() {
                   <>
                     <div className="status-badge active">トレーニング中</div>
                     <div className="visit-info">
-                      <span className="label">滞在時間</span>
-                      <DurationCounter startTime={currentVisit.startTime} />
+                      <div className="info-row">
+                        <span className="label">開始時刻</span>
+                        <span className="value-sub">{new Date(currentVisit.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                      </div>
+                      <div className="info-row">
+                        <span className="label">滞在時間</span>
+                        <DurationCounter startTime={currentVisit.startTime} />
+                      </div>
                     </div>
                     <button className="btn-out" onClick={handleCheckOut}>トレーニング終了 👋</button>
                   </>
@@ -199,25 +223,33 @@ function App() {
             </div>
           </div>
         )}
+        </>
+        )}
       </main>
 
-      <nav className="app-nav glass-card">
-        <button className={view === 'home' ? 'active' : ''} onClick={() => setView('home')}>ホーム</button>
-        <button className={view === 'history' ? 'active' : ''} onClick={() => setView('history')}>履歴</button>
-      </nav>
+      {user && (
+        <nav className="app-nav glass-card">
+          <button className={view === 'home' ? 'active' : ''} onClick={() => setView('home')}>ホーム</button>
+          <button className={view === 'history' ? 'active' : ''} onClick={() => setView('history')}>履歴</button>
+        </nav>
+      )}
 
       <style jsx>{`
         .app-container { padding: 16px; flex: 1; display: flex; flex-direction: column; gap: 20px; padding-bottom: 100px; max-width: 600px; margin: 0 auto; }
-        .app-header h1 { font-size: 1.4rem; color: var(--primary-color); text-align: center; font-weight: 800; letter-spacing: 1px; margin: 8px 0; }
+        .app-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
+        .app-header h1 { font-size: 1.4rem; color: var(--primary-color); font-weight: 800; letter-spacing: 1px; margin: 0; }
+        .btn-logout { background: none; color: var(--text-muted); font-size: 0.8rem; border: 1px solid var(--glass-border); padding: 4px 12px; border-radius: 6px; }
 
         .status-section { padding: 20px; margin-bottom: 8px; }
         .visit-status { display: flex; flex-direction: column; align-items: center; gap: 16px; }
         .status-badge { background: var(--glass-bg); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; color: var(--text-muted); border: 1px solid var(--glass-border); }
         .status-badge.active { background: rgba(81, 207, 102, 0.1); color: var(--success-color); border-color: var(--success-color); }
         
-        .visit-info { display: flex; flex-direction: column; align-items: center; }
+        .visit-info { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
+        .info-row { display: flex; justify-content: space-between; width: 100%; max-width: 200px; align-items: center; }
         .visit-info .label { font-size: 0.8rem; color: var(--text-muted); }
         .visit-info .value { font-size: 1.5rem; font-weight: 700; color: var(--primary-color); }
+        .visit-info .value-sub { font-size: 1.1rem; font-weight: 600; color: var(--text-main); }
 
         .btn-in, .btn-out { width: 100%; height: 56px; border-radius: 12px; font-weight: 700; font-size: 1.1rem; }
         .btn-in { background: var(--primary-color); color: #000; }
@@ -269,8 +301,8 @@ function DurationCounter({ startTime }) {
       const secs = Math.floor((diff % 60000) / 1000);
       
       let str = '';
-      if (hours > 0) str += `${hours}時間 `;
-      str += `${mins}分 ${secs}秒`;
+      if (hours > 0) str += `${hours}:`;
+      str += `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
       setElapsed(str);
     };
 
@@ -280,6 +312,45 @@ function DurationCounter({ startTime }) {
   }, [startTime]);
 
   return <span className="value">{elapsed}</span>;
+}
+
+function AuthView({ view, setView, onLogin }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  return (
+    <div className="auth-view animate-fade">
+      <div className="glass-card auth-card">
+        <h2>{view === 'login' ? 'ログイン' : '新規会員登録'}</h2>
+        <div className="auth-form">
+          <div className="input-group">
+            <label>メールアドレス</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="example@mail.com" />
+          </div>
+          <div className="input-group">
+            <label>パスワード</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+          </div>
+          <button className="btn-primary" onClick={() => onLogin(email, password)}>
+            {view === 'login' ? 'ログインする' : '登録する'}
+          </button>
+          <button className="btn-switch" onClick={() => setView(view === 'login' ? 'register' : 'login')}>
+            {view === 'login' ? 'アカウントをお持ちでない方はこちら' : 'ログインはこちら'}
+          </button>
+        </div>
+      </div>
+      <style jsx>{`
+        .auth-view { height: 80vh; display: flex; align-items: center; justify-content: center; }
+        .auth-card { padding: 40px 24px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 32px; text-align: center; }
+        .auth-form { display: flex; flex-direction: column; gap: 20px; }
+        .input-group { display: flex; flex-direction: column; gap: 8px; text-align: left; }
+        .input-group label { font-size: 0.85rem; color: var(--text-muted); padding-left: 4px; }
+        .input-group input { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); padding: 14px; border-radius: 10px; color: #fff; font-size: 1rem; }
+        .btn-primary { height: 56px; border-radius: 12px; font-weight: 700; margin-top: 8px; }
+        .btn-switch { background: none; color: var(--primary-color); font-size: 0.85rem; margin-top: 10px; }
+      `}</style>
+    </div>
+  );
 }
 
 function WeightForm({ onSubmit }) {
