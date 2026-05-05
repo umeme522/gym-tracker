@@ -36,6 +36,7 @@ function App() {
   const [registeredUsers, setRegisteredUsers] = useLocalStorage('gym-registered-users', []);
   const [authView, setAuthView] = useState('login');
   const [authError, setAuthError] = useState('');
+  const [editingRecord, setEditingRecord] = useState(null);
 
   // Demo Auth Functions (Simulating DB validation)
   const handleAuthAction = (profileData, type) => {
@@ -115,10 +116,32 @@ function App() {
     setRecords([newRecord, ...records]);
     setView('record-success');
     
-    // Auto redirect to history after 2 seconds
+    // Auto redirect to history after 1.5 seconds
     setTimeout(() => {
       setView('history');
     }, 1500);
+  };
+
+  const handleUpdateRecord = (data) => {
+    const updatedRecords = records.map(r => 
+      r.id === editingRecord.id ? { ...r, ...data } : r
+    );
+    setRecords(updatedRecords);
+    setEditingRecord(null);
+    setView('history');
+  };
+
+  const handleDeleteRecord = (id) => {
+    if (window.confirm('この記録を削除しますか？')) {
+      const updatedRecords = records.filter(r => r.id !== id);
+      setRecords(updatedRecords);
+    }
+  };
+
+  const handleEditRecord = (record) => {
+    setEditingRecord(record);
+    setSelectedMachine(machines.find(m => m.id === record.machineId));
+    setView('record-edit');
   };
 
   const handleCheckIn = () => {
@@ -213,6 +236,23 @@ function App() {
           </div>
         )}
 
+        {view === 'record-edit' && selectedMachine && editingRecord && (
+          <div className="view-record animate-fade">
+            <button className="btn-back" onClick={() => { setView('history'); setEditingRecord(null); }}>← 戻る</button>
+            <div className="glass-card record-form">
+              <div className="form-header">
+                <h2>{selectedMachine.name} (編集)</h2>
+              </div>
+              
+              {selectedMachine.type === 'cardio' ? (
+                <CardioForm onSubmit={handleUpdateRecord} initialData={editingRecord} />
+              ) : (
+                <WeightForm onSubmit={handleUpdateRecord} initialData={editingRecord} />
+              )}
+            </div>
+          </div>
+        )}
+
         {view === 'edit-profile' && (
           <ProfileEditView user={user} onSave={handleUpdateProfile} onBack={() => setView('home')} />
         )}
@@ -246,7 +286,13 @@ function App() {
                   ) : (
                     <>
                       <div className="item-info">
-                        <span className="item-name">{item.machineName}</span>
+                        <div className="item-header-row">
+                          <span className="item-name">{item.machineName}</span>
+                          <div className="item-actions">
+                            <button className="btn-icon-edit" onClick={() => handleEditRecord(item)}>✎</button>
+                            <button className="btn-icon-delete" onClick={() => handleDeleteRecord(item.id)}>✕</button>
+                          </div>
+                        </div>
                         <span className="item-date">{new Date(item.timestamp).toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                       <div className="item-data">
@@ -334,12 +380,18 @@ function App() {
         @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
 
         .history-list { display: flex; flex-direction: column; gap: 12px; }
-        .history-item { padding: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .history-item { padding: 16px; display: flex; justify-content: space-between; align-items: center; position: relative; }
         .history-item.visit-log { border-left: 4px solid var(--accent-color); }
-        .item-info { display: flex; flex-direction: column; gap: 4px; }
+        .item-info { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+        .item-header-row { display: flex; justify-content: space-between; align-items: flex-start; }
+        .item-actions { display: flex; gap: 8px; }
+        .btn-icon-edit, .btn-icon-delete { background: none; font-size: 1rem; padding: 4px 8px; border-radius: 6px; border: 1px solid transparent; }
+        .btn-icon-edit { color: var(--primary-color); }
+        .btn-icon-delete { color: var(--danger-color); }
+        .btn-icon-edit:active, .btn-icon-delete:active { background: rgba(255, 255, 255, 0.05); }
         .item-name { font-weight: 600; }
         .item-date { font-size: 0.8rem; color: var(--text-muted); }
-        .item-data { display: flex; gap: 12px; font-weight: 700; color: var(--primary-color); }
+        .item-data { display: flex; gap: 12px; font-weight: 700; color: var(--primary-color); min-width: 100px; justify-content: flex-end; }
         .visit-duration { color: var(--accent-color); }
 
         .app-nav { position: fixed; bottom: 20px; left: 20px; right: 20px; height: 64px; display: flex; justify-content: space-around; align-items: center; padding: 0 12px; z-index: 100; }
@@ -506,29 +558,33 @@ function ProfileEditView({ user, onSave, onBack }) {
   );
 }
 
-function WeightForm({ onSubmit }) {
-  const [weight, setWeight] = useState(20);
-  const [reps, setReps] = useState(10);
+function WeightForm({ onSubmit, initialData }) {
+  const [weight, setWeight] = useState(initialData?.weight || 20);
+  const [reps, setReps] = useState(initialData?.reps || 10);
   return (
     <div className="form-content">
       <Stepper label="重量 (kg)" value={weight} onChange={setWeight} step={5} min={0} />
       <Stepper label="回数 (reps)" value={reps} onChange={setReps} step={1} min={1} />
-      <button className="btn-primary full-width" onClick={() => onSubmit({ weight, reps })}>記録を保存する</button>
+      <button className="btn-primary full-width" onClick={() => onSubmit({ weight, reps })}>
+        {initialData ? '更新を保存する' : '記録を保存する'}
+      </button>
       <style jsx>{`.full-width { width: 100%; margin-top: 12px; height: 56px; font-size: 1.1rem; }.form-content { display: flex; flex-direction: column; gap: 24px; }`}</style>
     </div>
   );
 }
 
-function CardioForm({ onSubmit }) {
-  const [speed, setSpeed] = useState(6.0);
-  const [incline, setIncline] = useState(0);
-  const [time, setTime] = useState(20);
+function CardioForm({ onSubmit, initialData }) {
+  const [speed, setSpeed] = useState(initialData?.speed || 6.0);
+  const [incline, setIncline] = useState(initialData?.incline || 0);
+  const [time, setTime] = useState(initialData?.time || 20);
   return (
     <div className="form-content">
       <Stepper label="速度 (km/h)" value={speed} onChange={setSpeed} step={0.5} min={0.5} />
       <Stepper label="傾斜 (%)" value={incline} onChange={setIncline} step={1} min={0} max={15} />
       <Stepper label="時間 (分)" value={time} onChange={setTime} step={5} min={5} />
-      <button className="btn-primary full-width" onClick={() => onSubmit({ speed, incline, time })}>記録を保存する</button>
+      <button className="btn-primary full-width" onClick={() => onSubmit({ speed, incline, time })}>
+        {initialData ? '更新を保存する' : '記録を保存する'}
+      </button>
       <style jsx>{`.full-width { width: 100%; margin-top: 12px; height: 56px; font-size: 1.1rem; }.form-content { display: flex; flex-direction: column; gap: 24px; }`}</style>
     </div>
   );
