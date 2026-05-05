@@ -196,7 +196,6 @@ function App() {
             <button className="btn-back" onClick={() => setView('home')}>← 戻る</button>
             <div className="glass-card record-form">
               <div className="form-header">
-                <img src={selectedMachine.image} alt={selectedMachine.name} className="machine-img-large" />
                 <h2>{selectedMachine.name}</h2>
               </div>
               
