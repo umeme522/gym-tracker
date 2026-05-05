@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
+import emailjs from '@emailjs/browser';
 
 // Official Machine Images (White BG, No people)
 // Reliable Local Asset Imports (Bundled by Vite)
@@ -46,13 +47,25 @@ function App() {
     const { email, password } = profileData;
 
     if (type === 'register') {
+      const { confirmPassword } = profileData;
+      if (password !== confirmPassword) {
+        setAuthError('パスワードが一致しません。');
+        return;
+      }
       if (registeredUsers.find(u => u.email === email)) {
         setAuthError('このメールアドレスは既に登録されています。');
         return;
       }
+      
       const newUser = { ...profileData, uid: Date.now().toString() };
       setRegisteredUsers([...registeredUsers, newUser]);
       setUser(newUser);
+
+      // Email Sending Logic (Demo)
+      console.log(`Sending welcome email to ${email} with password: ${password}`);
+      // In production, use your actual ServiceID, TemplateID, and PublicKey
+      // emailjs.send('service_id', 'template_id', { to_email: email, username: profileData.username, password: password }, 'public_key');
+      alert(`登録完了！\n${email} 宛にパスワード確認メールを送信しました（デモ）。`);
     } else {
       const existingUser = registeredUsers.find(u => u.email === email && u.password === password);
       if (existingUser) {
@@ -432,6 +445,7 @@ function DurationCounter({ startTime }) {
 function AuthView({ view, setView, onAuth, error }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [username, setUsername] = useState('');
   const [height, setHeight] = useState('170');
   const [weight, setWeight] = useState('65');
@@ -440,6 +454,9 @@ function AuthView({ view, setView, onAuth, error }) {
     <div className="auth-view animate-fade">
       <div className="glass-card auth-card">
         <h2>{view === 'login' ? 'ログイン' : '新規会員登録'}</h2>
+        <div className="auth-desc">
+          {view === 'login' ? 'メールアドレスとパスワードでログイン' : 'IDはメールアドレスになります。'}
+        </div>
         {error && <div className="auth-error">{error}</div>}
         <div className="auth-form">
           {view === 'register' && (
@@ -461,14 +478,20 @@ function AuthView({ view, setView, onAuth, error }) {
             </>
           )}
           <div className="input-group">
-            <label>メールアドレス</label>
+            <label>メールアドレス (ID)</label>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="example@mail.com" />
           </div>
           <div className="input-group">
             <label>パスワード</label>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
           </div>
-          <button className="btn-primary" onClick={() => onAuth({ email, password, username, height, weight }, view)}>
+          {view === 'register' && (
+            <div className="input-group">
+              <label>パスワード (確認用)</label>
+              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="再度入力してください" />
+            </div>
+          )}
+          <button className="btn-primary" onClick={() => onAuth({ email, password, confirmPassword, username, height, weight }, view)}>
             {view === 'login' ? 'ログインする' : '登録する'}
           </button>
           <button className="btn-switch" onClick={() => { setView(view === 'login' ? 'register' : 'login'); }}>
@@ -478,7 +501,8 @@ function AuthView({ view, setView, onAuth, error }) {
       </div>
       <style jsx>{`
         .auth-view { min-height: 90vh; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
-        .auth-card { padding: 32px 20px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 24px; text-align: center; box-sizing: border-box; }
+        .auth-card { padding: 32px 20px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 20px; text-align: center; box-sizing: border-box; }
+        .auth-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; }
         .auth-error { background: rgba(255, 107, 107, 0.1); color: var(--danger-color); padding: 12px; border-radius: 8px; font-size: 0.85rem; border: 1px solid var(--danger-color); }
         .auth-form { display: flex; flex-direction: column; gap: 16px; width: 100%; }
         .input-group { display: flex; flex-direction: column; gap: 6px; text-align: left; width: 100%; }
