@@ -33,11 +33,32 @@ function App() {
   const [visitLog, setVisitLog] = useLocalStorage('gym-visit-log', []);
   const [currentVisit, setCurrentVisit] = useLocalStorage('gym-current-visit', null);
   const [user, setUser] = useLocalStorage('gym-user-profile', null);
+  const [registeredUsers, setRegisteredUsers] = useLocalStorage('gym-registered-users', []);
   const [authView, setAuthView] = useState('login');
+  const [authError, setAuthError] = useState('');
 
-  // Demo Auth Functions
-  const handleDemoLogin = (profileData) => {
-    setUser({ ...profileData, uid: 'demo-user-123' });
+  // Demo Auth Functions (Simulating DB validation)
+  const handleAuthAction = (profileData, type) => {
+    setAuthError('');
+    const { email, password } = profileData;
+
+    if (type === 'register') {
+      if (registeredUsers.find(u => u.email === email)) {
+        setAuthError('このメールアドレスは既に登録されています。');
+        return;
+      }
+      const newUser = { ...profileData, uid: Date.now().toString() };
+      setRegisteredUsers([...registeredUsers, newUser]);
+      setUser(newUser);
+    } else {
+      const existingUser = registeredUsers.find(u => u.email === email && u.password === password);
+      if (existingUser) {
+        setUser(existingUser);
+      } else {
+        setAuthError('メールアドレスまたはパスワードが正しくありません。');
+        return;
+      }
+    }
     setView('home');
   };
 
@@ -118,7 +139,7 @@ function App() {
 
       <main className="app-main">
         {!user ? (
-          <AuthView view={authView} setView={setAuthView} onLogin={handleDemoLogin} />
+          <AuthView view={authView} setView={setAuthView} onAuth={handleAuthAction} error={authError} />
         ) : (
           <>
         {view === 'home' && (
@@ -335,7 +356,7 @@ function DurationCounter({ startTime }) {
   return <span className="value">{elapsed}</span>;
 }
 
-function AuthView({ view, setView, onLogin }) {
+function AuthView({ view, setView, onAuth, error }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
@@ -346,6 +367,7 @@ function AuthView({ view, setView, onLogin }) {
     <div className="auth-view animate-fade">
       <div className="glass-card auth-card">
         <h2>{view === 'login' ? 'ログイン' : '新規会員登録'}</h2>
+        {error && <div className="auth-error">{error}</div>}
         <div className="auth-form">
           {view === 'register' && (
             <>
@@ -373,10 +395,10 @@ function AuthView({ view, setView, onLogin }) {
             <label>パスワード</label>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
           </div>
-          <button className="btn-primary" onClick={() => onLogin({ email, username, height, weight })}>
+          <button className="btn-primary" onClick={() => onAuth({ email, password, username, height, weight }, view)}>
             {view === 'login' ? 'ログインする' : '登録する'}
           </button>
-          <button className="btn-switch" onClick={() => setView(view === 'login' ? 'register' : 'login')}>
+          <button className="btn-switch" onClick={() => { setView(view === 'login' ? 'register' : 'login'); }}>
             {view === 'login' ? 'アカウントをお持ちでない方はこちら' : 'ログインはこちら'}
           </button>
         </div>
@@ -384,6 +406,7 @@ function AuthView({ view, setView, onLogin }) {
       <style jsx>{`
         .auth-view { min-height: 90vh; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
         .auth-card { padding: 32px 20px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 24px; text-align: center; box-sizing: border-box; }
+        .auth-error { background: rgba(255, 107, 107, 0.1); color: var(--danger-color); padding: 12px; border-radius: 8px; font-size: 0.85rem; border: 1px solid var(--danger-color); }
         .auth-form { display: flex; flex-direction: column; gap: 16px; width: 100%; }
         .input-group { display: flex; flex-direction: column; gap: 6px; text-align: left; width: 100%; }
         .input-group label { font-size: 0.8rem; color: var(--text-muted); padding-left: 4px; }
