@@ -21,29 +21,26 @@ import {
   deleteDoc
 } from 'firebase/firestore';
 
-// Official Machine Images (White BG, No people)
-// Reliable Local Asset Imports (Bundled by Vite)
-// Machine Images (Embedded Data URLs or High-Reliability Placeholders to ensure 100% visibility)
-const latImg = 'https://cdn-icons-png.flaticon.com/512/2548/2548530.png';
-const chestImg = 'https://cdn-icons-png.flaticon.com/512/2548/2548537.png';
-const shoulderImg = 'https://cdn-icons-png.flaticon.com/512/2548/2548518.png';
-const legImg = 'https://cdn-icons-png.flaticon.com/512/2548/2548455.png';
-const adductionImg = 'https://cdn-icons-png.flaticon.com/512/2548/2548531.png';
-const dipsImg = 'https://cdn-icons-png.flaticon.com/512/2548/2548523.png';
-const bicepImg = 'https://cdn-icons-png.flaticon.com/512/2548/2548536.png';
-const treadmillImg = 'https://cdn-icons-png.flaticon.com/512/2548/2548430.png';
-const bikeImg = treadmillImg; 
-const abbenchImg = chestImg;
+// Reliable Icons for machines (Google Material Symbols)
+const latImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/fitness_center/default/24px.svg';
+const chestImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/compress/default/24px.svg';
+const shoulderImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/vertical_align_top/default/24px.svg';
+const legImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/directions_walk/default/24px.svg';
+const adductionImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/join_inner/default/24px.svg';
+const dipsImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/vertical_align_bottom/default/24px.svg';
+const bicepImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/accessibility_new/default/24px.svg';
+const treadmillImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/directions_run/default/24px.svg';
+const bikeImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/pedal_bike/default/24px.svg';
+const abbenchImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/straighten/default/24px.svg';
 
-// 初期マシンデータ
 const INITIAL_MACHINES = [
-  { id: 1, name: 'ラットプルダウン', icon: '👐', image: latImg, type: 'weight' },
+  { id: 1, name: 'ラットプルダウン', icon: '🏋️', image: latImg, type: 'weight' },
   { id: 2, name: 'チェストプレス', icon: '💪', image: chestImg, type: 'weight' },
   { id: 3, name: 'ショルダープレス', icon: '⬆️', image: shoulderImg, type: 'weight' },
   { id: 4, name: 'レッグプレス', icon: '🦵', image: legImg, type: 'weight' },
-  { id: 5, name: 'アダクション／アブダクション', icon: '↔️', image: adductionImg, type: 'weight' },
+  { id: 5, name: 'アダクション', icon: '↔️', image: adductionImg, type: 'weight' },
   { id: 6, name: 'ディップス', icon: '⬇️', image: dipsImg, type: 'weight' },
-  { id: 7, name: 'バイセップスカール', icon: '➰', image: bicepImg, type: 'weight' },
+  { id: 7, name: 'バイセップスカール', icon: '💪', image: bicepImg, type: 'weight' },
   { id: 8, name: 'トレッドミル', icon: '🏃', image: treadmillImg, type: 'cardio' },
 ];
 
@@ -333,7 +330,6 @@ function App() {
     <div className="app-container">
       <header className="app-header">
         <h1>ジムトラッカー</h1>
-        {user && <button className="btn-logout" onClick={handleDemoLogout}>ログアウト</button>}
       </header>
 
       <main className="app-main">
@@ -343,7 +339,25 @@ function App() {
           <>
         {view === 'home' && (
           <div className="view-home animate-fade">
-            <ProfileBar user={user} onEdit={() => setView('edit-profile')} />
+            <div className="user-profile-header glass-card">
+              <div className="user-info">
+                <div className="user-main">
+                  <span className="welcome">こんにちは</span>
+                  <span className="username">{user.username}様</span>
+                </div>
+                <div className="user-stats-row">
+                  <div className="user-stat">
+                    <span className="lab">身長</span>
+                    <span className="val">{user.height}<span className="unit">cm</span></span>
+                  </div>
+                  <div className="user-stat">
+                    <span className="lab">体重</span>
+                    <span className="val">{user.weight}<span className="unit">kg</span></span>
+                  </div>
+                </div>
+              </div>
+              <button className="btn-logout" onClick={handleDemoLogout}>ログアウト</button>
+            </div>
             <section className="status-section glass-card">
               <div className="visit-status">
                 {currentVisit ? (
@@ -538,14 +552,16 @@ function App() {
         .app-header h1 { font-size: 1.4rem; color: var(--primary-color); font-weight: 800; letter-spacing: 1px; margin: 0; }
         .btn-logout { background: none; color: var(--text-muted); font-size: 0.8rem; border: 1px solid var(--glass-border); padding: 4px 12px; border-radius: 6px; }
 
-        .profile-bar { padding: 12px 16px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 8px; border-radius: 16px; border-left: 4px solid var(--primary-color); box-sizing: border-box; cursor: pointer; transition: background 0.2s; }
-        .profile-bar:hover { background: rgba(255, 255, 255, 0.05); }
-        .profile-user { display: flex; justify-content: space-between; align-items: center; }
-        .profile-user .name { font-weight: 700; font-size: 1.1rem; }
-        .profile-user .edit-hint { font-size: 0.7rem; color: var(--primary-color); opacity: 0.8; }
-        .profile-stats { display: flex; gap: 16px; font-size: 0.85rem; color: var(--text-muted); }
-        .profile-stats .stat-val { color: var(--text-main); font-weight: 600; margin-left: 4px; }
-        .bmi-badge { background: rgba(255, 204, 0, 0.1); color: var(--primary-color); padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; }
+        .user-profile-header { padding: 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 12px; border-radius: 16px; border-left: 4px solid var(--primary-color); }
+        .user-info { display: flex; flex-direction: column; gap: 8px; }
+        .user-main { display: flex; flex-direction: column; }
+        .user-main .welcome { font-size: 0.75rem; color: var(--text-muted); }
+        .user-main .username { font-weight: 700; font-size: 1.1rem; }
+        .user-stats-row { display: flex; gap: 24px; }
+        .user-stat span { display: block; }
+        .user-stat .val { font-size: 1.2rem; font-weight: 800; color: var(--primary-color); line-height: 1.2; }
+        .user-stat .unit { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+        .user-stat .lab { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
 
         .status-section { padding: 20px; margin-bottom: 8px; }
         .visit-status { display: flex; flex-direction: column; align-items: center; gap: 16px; }
@@ -571,14 +587,13 @@ function App() {
         .machine-card:hover { transform: translateY(-4px); border-color: var(--primary-color); }
         
         .machine-img-container { width: 100%; aspect-ratio: 4/3; overflow: hidden; background: #fff; display: flex; align-items: center; justify-content: center; }
-        .machine-thumb { width: 100%; height: 100%; object-fit: contain; }
+        .machine-thumb { width: 60%; height: 60%; object-fit: contain; opacity: 0.7; }
         .machine-name { padding: 12px; font-weight: 600; font-size: 0.85rem; text-align: center; flex: 1; display: flex; align-items: center; justify-content: center; color: #ffffff !important; }
 
         .btn-back { background: none; color: var(--text-muted); margin-bottom: 12px; font-size: 0.9rem; padding: 8px 0; }
         .record-form { padding: 24px 16px; display: flex; flex-direction: column; gap: 20px; border-radius: 16px; }
         .form-header { text-align: center; display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
         .last-record-hint { font-size: 0.8rem; color: var(--primary-color); opacity: 0.8; font-weight: 600; }
-        .machine-img-large { width: 100%; border-radius: 12px; aspect-ratio: 1/1; object-fit: contain; background: #fff; padding: 10px; border: 1px solid var(--glass-border); }
         
         .view-success { height: 70vh; display: flex; align-items: center; justify-content: center; }
         .success-card { padding: 48px 32px; text-align: center; display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 300px; border-color: var(--success-color); }
