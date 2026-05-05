@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 
-// Official Machine Images (White BG, No people)
-const latImg = 'https://chocozap.jp/assets/img/studios/service_latpulldown.png';
-const chestImg = 'https://chocozap.jp/assets/img/studios/service_chestpress.png';
-const shoulderImg = 'https://chocozap.jp/assets/img/studios/service_shoulderpress.png';
-const legImg = 'https://chocozap.jp/assets/img/studios/service_legpress.png';
-const adductionImg = 'https://chocozap.jp/assets/img/studios/service_adduction.png';
-const dipsImg = 'https://chocozap.jp/assets/img/studios/service_dips.png';
-const bicepImg = 'https://chocozap.jp/assets/img/studios/service_bicepcurls.png';
-const treadmillImg = 'https://chocozap.jp/assets/img/studios/service_treadmill.png';
-const bikeImg = 'https://chocozap.jp/assets/img/studios/service_bike.png';
-const abbenchImg = 'https://chocozap.jp/assets/img/studios/service_abbench.png';
+// Path to official images in public folder
+const latImg = './lat_pulldown.png';
+const chestImg = './chest_press.png';
+const shoulderImg = './shoulder_press.png';
+const legImg = './leg_press.png';
+const adductionImg = './adduction.png';
+const dipsImg = './dips.png';
+const bicepImg = './bicep_curl.png';
+const treadmillImg = './treadmill.png';
 
 // 初期マシンデータ
 const INITIAL_MACHINES = [
@@ -23,8 +21,6 @@ const INITIAL_MACHINES = [
   { id: 6, name: 'ディップス', icon: '⬇️', image: dipsImg, type: 'weight' },
   { id: 7, name: 'バイセップスカール', icon: '➰', image: bicepImg, type: 'weight' },
   { id: 8, name: 'トレッドミル', icon: '🏃', image: treadmillImg, type: 'cardio' },
-  { id: 9, name: 'クロスバイク', icon: '🚴', image: bikeImg, type: 'cardio' },
-  { id: 10, name: '腹筋マシン', icon: '🧘', image: abbenchImg, type: 'weight' },
 ];
 
 function App() {
@@ -35,7 +31,7 @@ function App() {
   const [visitLog, setVisitLog] = useLocalStorage('gym-visit-log', []);
   const [currentVisit, setCurrentVisit] = useLocalStorage('gym-current-visit', null);
 
-  // Rename "Office Press" to "Chest Press" if it exists in stored data and update images to official ones
+  // Rename "Office Press" to "Chest Press" if it exists in stored data and update images to local public path
   React.useEffect(() => {
     let needsUpdate = false;
     const updatedMachines = machines.map(m => {
@@ -44,10 +40,10 @@ function App() {
         updated.name = 'チェストプレス';
         needsUpdate = true;
       }
-      // Force update images to official URLs from INITIAL_MACHINES
-      const official = INITIAL_MACHINES.find(om => om.id === m.id);
-      if (official && m.image !== official.image) {
-        updated.image = official.image;
+      // Force update images to local paths from INITIAL_MACHINES
+      const local = INITIAL_MACHINES.find(om => om.id === m.id);
+      if (local && m.image !== local.image) {
+        updated.image = local.image;
         needsUpdate = true;
       }
       return updated;
