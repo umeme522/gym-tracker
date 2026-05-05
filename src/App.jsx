@@ -41,6 +41,11 @@ function App() {
     setView('home');
   };
 
+  const handleUpdateProfile = (newData) => {
+    setUser({ ...user, ...newData });
+    setView('home');
+  };
+
   const handleDemoLogout = () => {
     setUser(null);
     setView('home');
@@ -118,7 +123,7 @@ function App() {
           <>
         {view === 'home' && (
           <div className="view-home animate-fade">
-            <ProfileBar user={user} />
+            <ProfileBar user={user} onEdit={() => setView('edit-profile')} />
             <section className="status-section glass-card">
               <div className="visit-status">
                 {currentVisit ? (
@@ -183,6 +188,10 @@ function App() {
           </div>
         )}
 
+        {view === 'edit-profile' && (
+          <ProfileEditView user={user} onSave={handleUpdateProfile} onBack={() => setView('home')} />
+        )}
+
         {view === 'history' && (
           <div className="view-history animate-fade">
             <h2>トレーニング履歴</h2>
@@ -243,9 +252,11 @@ function App() {
         .app-header h1 { font-size: 1.4rem; color: var(--primary-color); font-weight: 800; letter-spacing: 1px; margin: 0; }
         .btn-logout { background: none; color: var(--text-muted); font-size: 0.8rem; border: 1px solid var(--glass-border); padding: 4px 12px; border-radius: 6px; }
 
-        .profile-bar { padding: 12px 16px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 8px; border-radius: 16px; border-left: 4px solid var(--primary-color); box-sizing: border-box; }
+        .profile-bar { padding: 12px 16px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 8px; border-radius: 16px; border-left: 4px solid var(--primary-color); box-sizing: border-box; cursor: pointer; transition: background 0.2s; }
+        .profile-bar:hover { background: rgba(255, 255, 255, 0.05); }
         .profile-user { display: flex; justify-content: space-between; align-items: center; }
         .profile-user .name { font-weight: 700; font-size: 1.1rem; }
+        .profile-user .edit-hint { font-size: 0.7rem; color: var(--primary-color); opacity: 0.8; }
         .profile-stats { display: flex; gap: 16px; font-size: 0.85rem; color: var(--text-muted); }
         .profile-stats .stat-val { color: var(--text-main); font-weight: 600; margin-left: 4px; }
         .bmi-badge { background: rgba(255, 204, 0, 0.1); color: var(--primary-color); padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; }
@@ -385,15 +396,15 @@ function AuthView({ view, setView, onLogin }) {
   );
 }
 
-function ProfileBar({ user }) {
+function ProfileBar({ user, onEdit }) {
   const h = parseFloat(user.height) / 100;
   const w = parseFloat(user.weight);
   const bmi = (w / (h * h)).toFixed(1);
 
   return (
-    <section className="profile-bar glass-card">
+    <section className="profile-bar glass-card" onClick={onEdit}>
       <div className="profile-user">
-        <span className="name">{user.username || 'ゲスト'} 様</span>
+        <span className="name">{user.username || 'ゲスト'} 様 <span className="edit-hint">編集 ✎</span></span>
         <span className="bmi-badge">BMI {bmi}</span>
       </div>
       <div className="profile-stats">
@@ -401,6 +412,55 @@ function ProfileBar({ user }) {
         <span>体重: <span className="stat-val">{user.weight} kg</span></span>
       </div>
     </section>
+  );
+}
+
+function ProfileEditView({ user, onSave, onBack }) {
+  const [username, setUsername] = useState(user.username || '');
+  const [height, setHeight] = useState(user.height || '');
+  const [weight, setWeight] = useState(user.weight || '');
+
+  return (
+    <div className="view-record animate-fade">
+      <button className="btn-back" onClick={onBack}>← 戻る</button>
+      <div className="glass-card record-form">
+        <h2>プロフィール編集</h2>
+        <div className="auth-form" style={{ width: '100%' }}>
+          <div className="input-group">
+            <label>ユーザー名</label>
+            <input 
+              type="text" 
+              value={username} 
+              onChange={(e) => setUsername(e.target.value)} 
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', padding: '12px', borderRadius: '10px', color: '#fff', width: '100%', boxSizing: 'border-box' }}
+            />
+          </div>
+          <div className="row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="input-group">
+              <label>身長 (cm)</label>
+              <input 
+                type="number" 
+                value={height} 
+                onChange={(e) => setHeight(e.target.value)} 
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', padding: '12px', borderRadius: '10px', color: '#fff', width: '100%', boxSizing: 'border-box' }}
+              />
+            </div>
+            <div className="input-group">
+              <label>体重 (kg)</label>
+              <input 
+                type="number" 
+                value={weight} 
+                onChange={(e) => setWeight(e.target.value)} 
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', padding: '12px', borderRadius: '10px', color: '#fff', width: '100%', boxSizing: 'border-box' }}
+              />
+            </div>
+          </div>
+          <button className="btn-primary" style={{ width: '100%', marginTop: '16px' }} onClick={() => onSave({ username, height, weight })}>
+            変更を保存する
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
