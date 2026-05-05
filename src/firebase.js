@@ -4,12 +4,12 @@ import { getFirestore } from "firebase/firestore";
 
 // TODO: Replace with your Firebase project configuration
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAclOf2qoR-6Qh4a2iooHDqnKT9qAs7zs0",
+  authDomain: "gymtracker-app-4d04a.firebaseapp.com",
+  projectId: "gymtracker-app-4d04a",
+  storageBucket: "gymtracker-app-4d04a.firebasestorage.app",
+  messagingSenderId: "261039309002",
+  appId: "1:261039309002:web:872e596690ee9cf4307433"
 };
 
 const app = initializeApp(firebaseConfig);

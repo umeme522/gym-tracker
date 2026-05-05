@@ -1,6 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import emailjs from '@emailjs/browser';
+import { auth, db } from './firebase';
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  onAuthStateChanged,
+  signOut 
+} from 'firebase/auth';
+import { 
+  doc, 
+  setDoc, 
+  getDoc, 
+  onSnapshot, 
+  collection, 
+  query, 
+  orderBy,
+  addDoc,
+  updateDoc,
+  deleteDoc
+} from 'firebase/firestore';
 
 // Official Machine Images (White BG, No people)
 // Reliable Local Asset Imports (Bundled by Vite)
@@ -32,15 +51,62 @@ function App() {
   const [view, setView] = useState('home');
   const [selectedMachine, setSelectedMachine] = useState(null);
   const [machines, setMachines] = useLocalStorage('gym-machines', INITIAL_MACHINES);
-  const [records, setRecords] = useLocalStorage('gym-records', []);
-  const [visitLog, setVisitLog] = useLocalStorage('gym-visit-log', []);
+  const [records, setRecords] = useState([]);
+  const [visitLog, setVisitLog] = useState([]);
   const [currentVisit, setCurrentVisit] = useLocalStorage('gym-current-visit', null);
-  const [user, setUser] = useLocalStorage('gym-user-profile', null);
-  const [registeredUsers, setRegisteredUsers] = useLocalStorage('gym-registered-users', []);
+  const [user, setUser] = useState(null);
   const [authView, setAuthView] = useState('login');
   const [authError, setAuthError] = useState('');
   const [editingRecord, setEditingRecord] = useState(null);
   const [tempVisitRecords, setTempVisitRecords] = useLocalStorage('gym-temp-visit-records', []);
+  const [loading, setLoading] = useState(true);
+
+  // Sync with Firebase Auth
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        // User is signed in
+        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+        if (userDoc.exists()) {
+          setUser({ ...userDoc.data(), uid: firebaseUser.uid });
+        } else {
+          // If profile missing, just set basic info
+          setUser({ email: firebaseUser.email, uid: firebaseUser.uid });
+        }
+      } else {
+        // User is signed out
+        setUser(null);
+      }
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  // Sync Training Data from Firestore
+  useEffect(() => {
+    if (!user) {
+      setRecords([]);
+      setVisitLog([]);
+      return;
+    }
+
+    // Individual Records (not in visits)
+    const qRecords = query(collection(db, 'users', user.uid, 'records'), orderBy('timestamp', 'desc'));
+    const unsubRecords = onSnapshot(qRecords, (snapshot) => {
+      setRecords(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+
+    // Visit Summaries
+    const qVisits = query(collection(db, 'users', user.uid, 'visitLogs'), orderBy('timestamp', 'desc'));
+    const unsubVisits = onSnapshot(qVisits, (snapshot) => {
+      setVisitLog(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+
+    return () => {
+      unsubRecords();
+      unsubVisits();
+    };
+  }, [user]);
 
   // Get last record for a specific machine to use as default
   const getLastRecord = (machineId) => {
@@ -57,50 +123,51 @@ function App() {
     return last;
   };
 
-  // Demo Auth Functions (Simulating DB validation)
-  const handleAuthAction = (profileData, type) => {
+  // Firebase Auth Action
+  const handleAuthAction = async (profileData, type) => {
     setAuthError('');
     const { email, password } = profileData;
 
-    if (type === 'register') {
-      const { confirmPassword } = profileData;
-      if (password !== confirmPassword) {
-        setAuthError('パスワードが一致しません。');
-        return;
-      }
-      if (registeredUsers.find(u => u.email === email)) {
-        setAuthError('このメールアドレスは既に登録されています。');
-        return;
-      }
-      
-      const newUser = { ...profileData, uid: Date.now().toString() };
-      setRegisteredUsers([...registeredUsers, newUser]);
-      setUser(newUser);
-
-      // Email Sending Logic (Demo)
-      console.log(`Sending welcome email to ${email} with password: ${password}`);
-      // In production, use your actual ServiceID, TemplateID, and PublicKey
-      // emailjs.send('service_id', 'template_id', { to_email: email, username: profileData.username, password: password }, 'public_key');
-      alert(`登録完了！\n${email} 宛にパスワード確認メールを送信しました（デモ）。`);
-    } else {
-      const existingUser = registeredUsers.find(u => u.email === email && u.password === password);
-      if (existingUser) {
-        setUser(existingUser);
+    try {
+      if (type === 'register') {
+        const { confirmPassword, username, height, weight } = profileData;
+        if (password !== confirmPassword) {
+          setAuthError('パスワードが一致しません。');
+          return;
+        }
+        
+        const res = await createUserWithEmailAndPassword(auth, email, password);
+        const userData = { email, username, height, weight, createdAt: new Date().toISOString() };
+        await setDoc(doc(db, 'users', res.user.uid), userData);
+        setUser({ ...userData, uid: res.user.uid });
+        
+        alert(`登録完了！\n${email} 宛にパスワード確認メールを送信しました（デモ）。`);
       } else {
-        setAuthError('メールアドレスまたはパスワードが正しくありません。');
-        return;
+        await signInWithEmailAndPassword(auth, email, password);
       }
+      setView('home');
+    } catch (err) {
+      console.error(err);
+      if (err.code === 'auth/email-already-in-use') setAuthError('このメールアドレスは既に登録されています。');
+      else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') setAuthError('メールアドレスまたはパスワードが正しくありません。');
+      else setAuthError('認証エラーが発生しました。');
     }
-    setView('home');
   };
 
-  const handleUpdateProfile = (newData) => {
-    setUser({ ...user, ...newData });
-    setView('home');
+  const handleUpdateProfile = async (newData) => {
+    if (!user) return;
+    try {
+      await updateDoc(doc(db, 'users', user.uid), newData);
+      setUser({ ...user, ...newData });
+      setView('home');
+    } catch (err) {
+      console.error(err);
+      alert('プロフィールの更新に失敗しました。');
+    }
   };
 
-  const handleDemoLogout = () => {
-    setUser(null);
+  const handleDemoLogout = async () => {
+    await signOut(auth);
     setView('home');
   };
 
@@ -136,67 +203,69 @@ function App() {
     }
   }, [machines, setMachines]);
 
-  const handleAddRecord = (data) => {
+  const handleAddRecord = async (data) => {
+    if (!user) return;
     const newRecord = {
-      id: Date.now(),
       machineId: selectedMachine.id,
       machineName: selectedMachine.name,
       ...data,
       timestamp: new Date().toISOString(),
     };
 
-    if (currentVisit) {
-      // During a visit, save to temp list
-      setTempVisitRecords([newRecord, ...tempVisitRecords]);
-    } else {
-      // Individual record outside visit
-      setRecords([newRecord, ...records]);
-    }
-
-    setView('record-success');
-    
-    // Auto redirect to history after 1.5 seconds
-    setTimeout(() => {
-      setView('history');
-    }, 1500);
-  };
-
-  const handleUpdateRecord = (data) => {
-    if (editingRecord.visitId) {
-      // Edit record inside a finished visit
-      const updatedVisits = visitLog.map(v => {
-        if (v.id === editingRecord.visitId) {
-          return {
-            ...v,
-            records: v.records.map(r => r.id === editingRecord.id ? { ...r, ...data } : r)
-          };
-        }
-        return v;
-      });
-      setVisitLog(updatedVisits);
-    } else {
-      const updatedRecords = records.map(r => 
-        r.id === editingRecord.id ? { ...r, ...data } : r
-      );
-      setRecords(updatedRecords);
-    }
-    setEditingRecord(null);
-    setView('history');
-  };
-
-  const handleDeleteRecord = (id, visitId = null) => {
-    if (window.confirm('この記録を削除しますか？')) {
-      if (visitId) {
-        const updatedVisits = visitLog.map(v => {
-          if (v.id === visitId) {
-            return { ...v, records: v.records.filter(r => r.id !== id) };
-          }
-          return v;
-        });
-        setVisitLog(updatedVisits);
+    try {
+      if (currentVisit) {
+        setTempVisitRecords([newRecord, ...tempVisitRecords]);
       } else {
-        const updatedRecords = records.filter(r => r.id !== id);
-        setRecords(updatedRecords);
+        await addDoc(collection(db, 'users', user.uid, 'records'), newRecord);
+      }
+      setView('record-success');
+      setTimeout(() => setView('history'), 1500);
+    } catch (err) {
+      console.error(err);
+      alert('記録の保存に失敗しました。');
+    }
+  };
+
+  const handleUpdateRecord = async (data) => {
+    if (!user || !editingRecord) return;
+    try {
+      if (editingRecord.visitId) {
+        const visitRef = doc(db, 'users', user.uid, 'visitLogs', editingRecord.visitId);
+        const visitDoc = await getDoc(visitRef);
+        if (visitDoc.exists()) {
+          const updatedRecords = visitDoc.data().records.map(r => 
+            r.id === editingRecord.id ? { ...r, ...data } : r
+          );
+          await updateDoc(visitRef, { records: updatedRecords });
+        }
+      } else {
+        await updateDoc(doc(db, 'users', user.uid, 'records', editingRecord.id), data);
+      }
+      setEditingRecord(null);
+      setView('history');
+    } catch (err) {
+      console.error(err);
+      alert('更新に失敗しました。');
+    }
+  };
+
+  const handleDeleteRecord = async (id, visitId = null) => {
+    if (!user) return;
+    if (window.confirm('この記録を削除しますか？')) {
+      try {
+        if (visitId) {
+          const visitRef = doc(db, 'users', user.uid, 'visitLogs', visitId);
+          const visitDoc = await getDoc(visitRef);
+          if (visitDoc.exists()) {
+            const updatedRecords = visitDoc.data().records.filter(r => r.id !== id);
+            await updateDoc(visitRef, { records: updatedRecords });
+          }
+        } else {
+          await deleteDoc(doc(db, 'users', user.uid, 'records', id));
+        }
+      } catch (err) {
+        console.error(err);
+        alert('削除に失敗しました。');
       }
     }
   };
@@ -213,14 +282,14 @@ function App() {
     setTempVisitRecords([]);
   };
 
-  const handleCheckOut = () => {
+  const handleCheckOut = async () => {
+    if (!user) return;
     const endTime = new Date();
     const startTime = new Date(currentVisit.startTime);
     const diffMs = endTime - startTime;
     const duration = Math.floor(diffMs / 60000); // minutes
 
     const newVisitLog = {
-      id: Date.now(),
       type: 'visit-summary',
       startTime: currentVisit.startTime,
       endTime: endTime.toISOString(),
@@ -229,10 +298,15 @@ function App() {
       timestamp: endTime.toISOString()
     };
 
-    setVisitLog([newVisitLog, ...visitLog]);
-    setCurrentVisit(null);
-    setTempVisitRecords([]);
-    setView('history');
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'visitLogs'), newVisitLog);
+      setCurrentVisit(null);
+      setTempVisitRecords([]);
+      setView('history');
+    } catch (err) {
+      console.error(err);
+      alert('終了の保存に失敗しました。');
+    }
   };
 
   return (
@@ -538,7 +612,9 @@ function App() {
 
         .app-nav { position: fixed; bottom: 20px; left: 20px; right: 20px; height: 64px; display: flex; justify-content: space-around; align-items: center; padding: 0 12px; z-index: 100; }
         .app-nav button { background: none; color: var(--text-muted); font-weight: 600; font-size: 0.9rem; padding: 8px 16px; border-radius: 8px; }
-        .app-nav button.active { color: var(--primary-color); background: rgba(255, 204, 0, 0.1); }
+        .app-nav button.active { color: var(--primary-color); font-weight: 700; background: rgba(255, 204, 0, 0.05); }
+
+        .loading-screen { height: 100vh; display: flex; align-items: center; justify-content: center; color: var(--primary-color); font-weight: 700; font-size: 1.2rem; }
         .empty-msg { text-align: center; color: var(--text-muted); margin-top: 40px; }
       `}</style>
     </div>
