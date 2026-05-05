@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 
-// Path to official images in public folder
-const latImg = './lat_pulldown.png';
-const chestImg = './chest_press.png';
-const shoulderImg = './shoulder_press.png';
-const legImg = './leg_press.png';
-const adductionImg = './adduction.png';
-const dipsImg = './dips.png';
-const bicepImg = './bicep_curl.png';
-const treadmillImg = './treadmill.png';
+// Clean Machine Images (White Background, No people)
+import latImg from './assets/machines/lat_pulldown_clean.png';
+import chestImg from './assets/machines/chest_press_clean.png';
+import shoulderImg from './assets/machines/shoulder_press_clean.png';
+import legImg from './assets/machines/leg_press_clean.png';
+import adductionImg from './assets/machines/adduction_clean.png';
+import dipsImg from './assets/machines/dips_clean.png';
+import bicepImg from './assets/machines/bicep_curl_clean.png';
+import treadmillImg from './assets/machines/treadmill_clean.png';
 
 // 初期マシンデータ
 const INITIAL_MACHINES = [
@@ -31,26 +31,35 @@ function App() {
   const [visitLog, setVisitLog] = useLocalStorage('gym-visit-log', []);
   const [currentVisit, setCurrentVisit] = useLocalStorage('gym-current-visit', null);
 
-  // Rename "Office Press" to "Chest Press" if it exists in stored data and update images to local public path
+  // Use a ref to prevent infinite loop
+  const hasFixedRef = React.useRef(false);
+
   React.useEffect(() => {
+    if (hasFixedRef.current) return;
+
     let needsUpdate = false;
     const updatedMachines = machines.map(m => {
       let updated = { ...m };
+      
+      // Fix "Office Press" -> "Chest Press"
       if (m.name === 'オフィスプレス') {
         updated.name = 'チェストプレス';
         needsUpdate = true;
       }
-      // Force update images to local paths from INITIAL_MACHINES
-      const local = INITIAL_MACHINES.find(om => om.id === m.id);
-      if (local && m.image !== local.image) {
-        updated.image = local.image;
+
+      // Ensure images are using the clean ones from INITIAL_MACHINES
+      const initial = INITIAL_MACHINES.find(im => im.id === m.id);
+      if (initial && !m.image.includes('clean')) {
+        updated.image = initial.image;
         needsUpdate = true;
       }
+
       return updated;
     });
 
     if (needsUpdate) {
       setMachines(updatedMachines);
+      hasFixedRef.current = true;
     }
   }, [machines, setMachines]);
 
