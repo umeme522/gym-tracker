@@ -267,11 +267,13 @@ function App() {
     }
   };
 
-  const handleDeleteRecord = async (id, visitId = null) => {
+  const handleDeleteRecord = async (id, visitId = null, isVisit = false) => {
     if (!user) return;
-    if (window.confirm('この記録を削除しますか？')) {
+    if (window.confirm(isVisit ? 'この滞在記録全体を削除しますか？' : 'この記録を削除しますか？')) {
       try {
-        if (visitId) {
+        if (isVisit) {
+          await deleteDoc(doc(db, 'users', user.uid, 'visitLogs', id));
+        } else if (visitId) {
           const visitRef = doc(db, 'users', user.uid, 'visitLogs', visitId);
           const visitDoc = await getDoc(visitRef);
           if (visitDoc.exists()) {
@@ -468,6 +470,9 @@ function App() {
                           {new Date(item.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                         </div>
                         <div className="visit-duration-simple">{item.duration}分</div>
+                        <div className="visit-actions-simple">
+                          <button className="btn-icon-delete" onClick={() => handleDeleteRecord(item.id, null, true)}>✕</button>
+                        </div>
                       </div>
                       
                       <div className="visit-records-simple">
@@ -477,6 +482,7 @@ function App() {
                             <span className="rec-val-simple">
                               {rec.weight !== undefined ? `${rec.weight}kg / ${rec.reps}回` : `${rec.speed}km/h / ${rec.time}分`}
                             </span>
+                            <button className="btn-rec-edit" onClick={() => handleEditRecord(rec, item.id)}>✎</button>
                           </div>
                         ))}
                       </div>
@@ -597,11 +603,13 @@ function App() {
         .visit-summary-content { width: 100%; display: flex; flex-direction: column; }
         .visit-header-simple { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); }
         .visit-time-range { font-size: 0.9rem; font-weight: 700; color: #fff; }
-        .visit-duration-simple { font-size: 0.85rem; color: var(--primary-color); font-weight: 800; }
+        .visit-duration-simple { font-size: 0.85rem; color: var(--primary-color); font-weight: 800; margin-left: auto; margin-right: 12px; }
+        .visit-actions-simple button { background: none; color: var(--danger-color); font-size: 0.9rem; opacity: 0.6; }
         .visit-records-simple { padding: 8px 16px 12px; display: flex; flex-direction: column; gap: 4px; }
-        .visit-rec-row-simple { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 4px 0; color: var(--text-muted); }
-        .rec-name-simple { font-weight: 500; }
-        .rec-val-simple { color: var(--text-main); font-weight: 600; }
+        .visit-rec-row-simple { display: flex; align-items: center; font-size: 0.85rem; padding: 4px 0; color: var(--text-muted); }
+        .rec-name-simple { font-weight: 500; flex: 1; }
+        .rec-val-simple { color: var(--text-main); font-weight: 600; margin-right: 12px; }
+        .btn-rec-edit { background: none; color: var(--primary-color); font-size: 0.8rem; opacity: 0.7; }
 
         .item-info { display: flex; flex-direction: column; gap: 4px; flex: 1; }
         .item-header-row { display: flex; justify-content: space-between; align-items: flex-start; }
@@ -815,6 +823,22 @@ function AnalysisView({ visitLog, user }) {
   const weeks = Math.max(1, Math.ceil((new Date() - firstVisit) / (7 * 24 * 60 * 60 * 1000)));
   const avgVisits = (totalVisits / weeks).toFixed(1);
 
+  // Group visits by month for chart
+  const last6Months = Array.from({length: 6}, (_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - (5 - i));
+    return d.toLocaleString('ja-JP', {month: 'short'});
+  });
+
+  const monthlyCounts = last6Months.map(month => {
+    const count = visitLog.filter(v => 
+      new Date(v.timestamp).toLocaleString('ja-JP', {month: 'short'}) === month
+    ).length;
+    return { month, count };
+  });
+
+  const maxCount = Math.max(...monthlyCounts.map(m => m.count), 1);
+
   // Get unique machines used
   const allRecs = visitLog.flatMap(v => v.records);
   const uniqueMachines = [...new Set(allRecs.map(r => r.machineName))];
@@ -829,6 +853,21 @@ function AnalysisView({ visitLog, user }) {
         <div className="glass-card stat-card">
           <span className="val">{avgVisits}</span>
           <span className="lab">週平均(回)</span>
+        </div>
+      </div>
+
+      <div className="glass-card chart-container">
+        <h3>月間ジム回数</h3>
+        <div className="bar-chart">
+          {monthlyCounts.map((m, i) => (
+            <div key={i} className="bar-column">
+              <div className="bar-val">{m.count > 0 ? m.count : ''}</div>
+              <div className="bar-wrapper">
+                <div className="bar" style={{ height: `${(m.count / maxCount) * 100}%` }}></div>
+              </div>
+              <div className="bar-label">{m.month}</div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -850,6 +889,15 @@ function AnalysisView({ visitLog, user }) {
           {uniqueMachines.length === 0 && <p className="empty-msg">まだトレーニング記録がありません</p>}
         </div>
       </div>
+      <style jsx>{`
+        .chart-container { padding: 20px; }
+        .bar-chart { display: flex; justify-content: space-around; align-items: flex-end; height: 150px; margin-top: 24px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .bar-column { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 8px; height: 100%; }
+        .bar-wrapper { width: 30px; height: 100%; display: flex; align-items: flex-end; background: rgba(255,255,255,0.02); border-radius: 4px; }
+        .bar { width: 100%; background: var(--primary-color); border-radius: 4px 4px 0 0; transition: height 0.6s ease-out; }
+        .bar-val { font-size: 0.75rem; font-weight: 800; color: var(--primary-color); }
+        .bar-label { font-size: 0.7rem; color: var(--text-muted); }
+      `}</style>
     </div>
   );
 }
