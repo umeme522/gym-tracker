@@ -238,12 +238,12 @@ function App() {
       )}
 
       <style jsx>{`
-        .app-container { padding: 16px; flex: 1; display: flex; flex-direction: column; gap: 20px; padding-bottom: 100px; max-width: 600px; margin: 0 auto; }
+        .app-container { padding: 16px; flex: 1; display: flex; flex-direction: column; gap: 20px; padding-bottom: 100px; max-width: 600px; margin: 0 auto; box-sizing: border-box; }
         .app-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
         .app-header h1 { font-size: 1.4rem; color: var(--primary-color); font-weight: 800; letter-spacing: 1px; margin: 0; }
         .btn-logout { background: none; color: var(--text-muted); font-size: 0.8rem; border: 1px solid var(--glass-border); padding: 4px 12px; border-radius: 6px; }
 
-        .profile-bar { padding: 12px 20px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 8px; border-radius: 16px; border-left: 4px solid var(--primary-color); }
+        .profile-bar { padding: 12px 16px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 8px; border-radius: 16px; border-left: 4px solid var(--primary-color); box-sizing: border-box; }
         .profile-user { display: flex; justify-content: space-between; align-items: center; }
         .profile-user .name { font-weight: 700; font-size: 1.1rem; }
         .profile-stats { display: flex; gap: 16px; font-size: 0.85rem; color: var(--text-muted); }
@@ -371,14 +371,14 @@ function AuthView({ view, setView, onLogin }) {
         </div>
       </div>
       <style jsx>{`
-        .auth-view { height: 90vh; display: flex; align-items: center; justify-content: center; }
-        .auth-card { padding: 32px 20px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 24px; text-align: center; }
-        .auth-form { display: flex; flex-direction: column; gap: 16px; }
-        .input-group { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+        .auth-view { min-height: 90vh; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
+        .auth-card { padding: 32px 20px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 24px; text-align: center; box-sizing: border-box; }
+        .auth-form { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+        .input-group { display: flex; flex-direction: column; gap: 6px; text-align: left; width: 100%; }
         .input-group label { font-size: 0.8rem; color: var(--text-muted); padding-left: 4px; }
-        .input-group input { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); padding: 12px; border-radius: 10px; color: #fff; font-size: 1rem; }
-        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .btn-primary { height: 56px; border-radius: 12px; font-weight: 700; margin-top: 8px; }
+        .input-group input { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); padding: 12px; border-radius: 10px; color: #fff; font-size: 1rem; width: 100%; box-sizing: border-box; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; box-sizing: border-box; }
+        .btn-primary { height: 56px; border-radius: 12px; font-weight: 700; margin-top: 8px; width: 100%; }
         .btn-switch { background: none; color: var(--primary-color); font-size: 0.85rem; margin-top: 10px; }
       `}</style>
     </div>
