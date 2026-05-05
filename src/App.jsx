@@ -23,15 +23,15 @@ import {
 
 // Official Machine Images (White BG, No people)
 // Reliable Local Asset Imports (Bundled by Vite)
-import latImg from './assets/machines/lat_pulldown_clean.png';
-import chestImg from './assets/machines/chest_press_clean.png';
-import shoulderImg from './assets/machines/shoulder_press_clean.png';
-import legImg from './assets/machines/leg_press_clean.png';
-import adductionImg from './assets/machines/adduction_clean.png';
-import dipsImg from './assets/machines/dips_clean.png';
-import bicepImg from './assets/machines/bicep_curl_clean.png';
-import treadmillImg from './assets/machines/treadmill_clean.png';
-// Fallback icons for ones we might be missing clean versions of
+// Official Machine Images (Reference from public root for GH Pages compatibility)
+const latImg = '/lat_pulldown.png';
+const chestImg = '/chest_press.png';
+const shoulderImg = '/shoulder_press.png';
+const legImg = '/leg_press.png';
+const adductionImg = '/adduction.png';
+const dipsImg = '/dips.png';
+const bicepImg = '/bicep_curl.png';
+const treadmillImg = '/treadmill.png';
 const bikeImg = treadmillImg; 
 const abbenchImg = chestImg;
 
@@ -141,7 +141,23 @@ function App() {
         await setDoc(doc(db, 'users', res.user.uid), userData);
         setUser({ ...userData, uid: res.user.uid });
         
-        alert(`登録完了！\n${email} 宛にパスワード確認メールを送信しました（デモ）。`);
+        // REAL Email Sending via EmailJS
+        emailjs.send(
+          'service_ozlah6b', 
+          'template_sgyc1qp', 
+          { 
+            to_email: email, 
+            username: username, 
+            email: email,
+            password: password 
+          }, 
+          'j1bMToGV2qz1hk2DN'
+        ).then(() => {
+          alert(`登録完了！\n${email} 宛にログイン情報を送信しました。`);
+        }).catch((err) => {
+          console.error('Email send failed:', err);
+          alert('登録完了しましたが、メール送信に失敗しました。');
+        });
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }
@@ -793,7 +809,6 @@ function WeightForm({ onSubmit, initialData }) {
 
 function AnalysisView({ visitLog, user }) {
   const totalVisits = visitLog.length;
-  const totalTime = visitLog.reduce((sum, v) => sum + (v.duration || 0), 0);
   
   // Calculate average visits per week
   const firstVisit = visitLog.length > 0 ? new Date(visitLog[visitLog.length-1].timestamp) : new Date();
@@ -812,16 +827,8 @@ function AnalysisView({ visitLog, user }) {
           <span className="lab">合計入館数</span>
         </div>
         <div className="glass-card stat-card">
-          <span className="val">{totalTime}</span>
-          <span className="lab">累計時間(分)</span>
-        </div>
-        <div className="glass-card stat-card">
           <span className="val">{avgVisits}</span>
           <span className="lab">週平均(回)</span>
-        </div>
-        <div className="glass-card stat-card">
-          <span className="val">{uniqueMachines.length}</span>
-          <span className="lab">利用機材数</span>
         </div>
       </div>
 
