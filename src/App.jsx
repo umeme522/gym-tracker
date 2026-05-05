@@ -221,7 +221,7 @@ function App() {
         await addDoc(collection(db, 'users', user.uid, 'records'), newRecord);
       }
       setView('record-success');
-      setTimeout(() => setView('history'), 1500);
+      setTimeout(() => setView('home'), 1500);
     } catch (err) {
       console.error(err);
       alert('記録の保存に失敗しました。');
@@ -379,11 +379,11 @@ function App() {
               <div className="form-header">
                 <h2>{selectedMachine.name}</h2>
                 <div className="last-record-hint">
-                  前回: {getLastRecord(selectedMachine.id) ? (
+                  前回データ: {getLastRecord(selectedMachine.id) ? (
                     selectedMachine.type === 'cardio' 
                       ? `${getLastRecord(selectedMachine.id).speed}km/h - ${getLastRecord(selectedMachine.id).time}分`
                       : `${getLastRecord(selectedMachine.id).weight}kg - ${getLastRecord(selectedMachine.id).reps}回`
-                  ) : 'データなし'}
+                  ) : 'なし'}
                 </div>
               </div>
               
@@ -453,10 +453,9 @@ function App() {
                         <div className="visit-duration-badge">{item.duration}分</div>
                       </div>
                       <div className="visit-time-range">
-                        {new Date(item.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} 
+                        {new Date(item.startTime).toLocaleString('ja-JP', {month:'short', day:'numeric', hour: '2-digit', minute:'2-digit'})} 
                         ～ 
                         {new Date(item.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                        <span className="visit-date">({new Date(item.timestamp).toLocaleDateString('ja-JP', {month:'short', day:'numeric'})})</span>
                       </div>
                       
                       <div className="visit-records-list">
