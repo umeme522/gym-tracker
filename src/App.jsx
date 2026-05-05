@@ -113,7 +113,12 @@ function App() {
       timestamp: new Date().toISOString(),
     };
     setRecords([newRecord, ...records]);
-    setView('history');
+    setView('record-success');
+    
+    // Auto redirect to history after 2 seconds
+    setTimeout(() => {
+      setView('history');
+    }, 1500);
   };
 
   const handleCheckIn = () => {
@@ -210,6 +215,16 @@ function App() {
 
         {view === 'edit-profile' && (
           <ProfileEditView user={user} onSave={handleUpdateProfile} onBack={() => setView('home')} />
+        )}
+
+        {view === 'record-success' && (
+          <div className="view-success animate-fade">
+            <div className="glass-card success-card">
+              <div className="success-icon">✅</div>
+              <h2>記録完了！</h2>
+              <p>お疲れ様でした💪</p>
+            </div>
+          </div>
         )}
 
         {view === 'history' && (
@@ -312,6 +327,11 @@ function App() {
         .record-form { padding: 24px 16px; display: flex; flex-direction: column; gap: 20px; border-radius: 16px; }
         .form-header { text-align: center; display: flex; flex-direction: column; gap: 12px; }
         .machine-img-large { width: 100%; border-radius: 12px; aspect-ratio: 1/1; object-fit: contain; background: #fff; padding: 10px; border: 1px solid var(--glass-border); }
+        
+        .view-success { height: 70vh; display: flex; align-items: center; justify-content: center; }
+        .success-card { padding: 48px 32px; text-align: center; display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 300px; border-color: var(--success-color); }
+        .success-icon { font-size: 4rem; margin-bottom: 8px; animation: bounce 0.5s ease; }
+        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
 
         .history-list { display: flex; flex-direction: column; gap: 12px; }
         .history-item { padding: 16px; display: flex; justify-content: space-between; align-items: center; }
