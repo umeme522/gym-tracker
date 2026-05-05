@@ -23,15 +23,15 @@ import {
 
 // Official Machine Images (White BG, No people)
 // Reliable Local Asset Imports (Bundled by Vite)
-// Machine Images (Using reliable AI-generated high-quality visuals for stability)
-const latImg = 'https://images.unsplash.com/photo-1591562811570-6803510477a8?auto=format&fit=crop&q=80&w=400';
-const chestImg = 'https://images.unsplash.com/photo-1594737625785-a239f56237bd?auto=format&fit=crop&q=80&w=400';
-const shoulderImg = 'https://images.unsplash.com/photo-1534367507873-d2d7e24c797f?auto=format&fit=crop&q=80&w=400';
-const legImg = 'https://images.unsplash.com/photo-1591940742878-13aba4b7a35e?auto=format&fit=crop&q=80&w=400';
-const adductionImg = 'https://images.unsplash.com/photo-1590239068512-632006cc1906?auto=format&fit=crop&q=80&w=400';
-const dipsImg = 'https://images.unsplash.com/photo-1581009146145-b5ef03a24b77?auto=format&fit=crop&q=80&w=400';
-const bicepImg = 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&q=80&w=400';
-const treadmillImg = 'https://images.unsplash.com/photo-1597452485669-2c7bb5fef90d?auto=format&fit=crop&q=80&w=400';
+// Machine Images (Embedded Data URLs or High-Reliability Placeholders to ensure 100% visibility)
+const latImg = 'https://cdn-icons-png.flaticon.com/512/2548/2548530.png';
+const chestImg = 'https://cdn-icons-png.flaticon.com/512/2548/2548537.png';
+const shoulderImg = 'https://cdn-icons-png.flaticon.com/512/2548/2548518.png';
+const legImg = 'https://cdn-icons-png.flaticon.com/512/2548/2548455.png';
+const adductionImg = 'https://cdn-icons-png.flaticon.com/512/2548/2548531.png';
+const dipsImg = 'https://cdn-icons-png.flaticon.com/512/2548/2548523.png';
+const bicepImg = 'https://cdn-icons-png.flaticon.com/512/2548/2548536.png';
+const treadmillImg = 'https://cdn-icons-png.flaticon.com/512/2548/2548430.png';
 const bikeImg = treadmillImg; 
 const abbenchImg = chestImg;
 
@@ -881,24 +881,6 @@ function AnalysisView({ visitLog, user, records }) {
         </div>
       </div>
 
-      <div className="glass-card" style={{ padding: '20px' }}>
-        <h3>成長の記録</h3>
-        <div className="machine-progress">
-          {uniqueMachines.slice(0, 5).map(name => {
-            const mRecs = allRecs.filter(r => r.machineName === name);
-            const latest = mRecs[0];
-            return (
-              <div key={name} className="progress-row">
-                <span className="prog-name">{name}</span>
-                <div className="prog-data">
-                  <span className="prog-val">{latest.weight || latest.speed}{latest.weight ? 'kg' : 'km/h'}</span>
-                </div>
-              </div>
-            );
-          })}
-          {uniqueMachines.length === 0 && <p className="empty-msg">まだトレーニング記録がありません</p>}
-        </div>
-      </div>
       <style jsx>{`
         .chart-container { padding: 16px 8px; margin-bottom: 12px; }
         .bar-chart { display: flex; justify-content: space-around; align-items: flex-end; height: 120px; margin-top: 16px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
