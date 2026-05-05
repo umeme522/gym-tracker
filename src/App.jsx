@@ -23,15 +23,15 @@ import {
 
 // Official Machine Images (White BG, No people)
 // Reliable Local Asset Imports (Bundled by Vite)
-// Official Machine Images (Reference from public root for GH Pages compatibility)
-const latImg = '/lat_pulldown.png';
-const chestImg = '/chest_press.png';
-const shoulderImg = '/shoulder_press.png';
-const legImg = '/leg_press.png';
-const adductionImg = '/adduction.png';
-const dipsImg = '/dips.png';
-const bicepImg = '/bicep_curl.png';
-const treadmillImg = '/treadmill.png';
+// Machine Images (Using reliable AI-generated high-quality visuals for stability)
+const latImg = 'https://images.unsplash.com/photo-1591562811570-6803510477a8?auto=format&fit=crop&q=80&w=400';
+const chestImg = 'https://images.unsplash.com/photo-1594737625785-a239f56237bd?auto=format&fit=crop&q=80&w=400';
+const shoulderImg = 'https://images.unsplash.com/photo-1534367507873-d2d7e24c797f?auto=format&fit=crop&q=80&w=400';
+const legImg = 'https://images.unsplash.com/photo-1591940742878-13aba4b7a35e?auto=format&fit=crop&q=80&w=400';
+const adductionImg = 'https://images.unsplash.com/photo-1590239068512-632006cc1906?auto=format&fit=crop&q=80&w=400';
+const dipsImg = 'https://images.unsplash.com/photo-1581009146145-b5ef03a24b77?auto=format&fit=crop&q=80&w=400';
+const bicepImg = 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&q=80&w=400';
+const treadmillImg = 'https://images.unsplash.com/photo-1597452485669-2c7bb5fef90d?auto=format&fit=crop&q=80&w=400';
 const bikeImg = treadmillImg; 
 const abbenchImg = chestImg;
 
@@ -815,22 +815,31 @@ function WeightForm({ onSubmit, initialData }) {
   );
 }
 
-function AnalysisView({ visitLog, user }) {
-  // Group visits by month for chart (Last 12 months)
-  const last12Months = Array.from({length: 12}, (_, i) => {
-    const d = new Date();
-    d.setMonth(d.getMonth() - (11 - i));
-    return d.toLocaleString('ja-JP', {month: 'short'});
+function AnalysisView({ visitLog, user, records }) {
+  // Monthly Chart: Jan to Dec order
+  const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+  const currentYear = new Date().getFullYear();
+  
+  const monthlyCounts = months.map(m => {
+    const count = visitLog.filter(v => {
+      const vDate = new Date(v.timestamp);
+      return vDate.getFullYear() === currentYear && 
+             vDate.toLocaleString('ja-JP', {month: 'short'}) === m;
+    }).length;
+    return { month: m, count };
   });
 
-  const monthlyCounts = last12Months.map(month => {
-    const count = visitLog.filter(v => 
-      new Date(v.timestamp).toLocaleString('ja-JP', {month: 'short'}) === month
-    ).length;
-    return { month, count };
-  });
+  const maxVisitCount = Math.max(...monthlyCounts.map(m => m.count), 1);
 
-  const maxCount = Math.max(...monthlyCounts.map(m => m.count), 1);
+  // Weight Chart Data (Last 10 entries)
+  const weightData = records
+    .filter(r => r.currentWeight)
+    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+    .slice(-10);
+
+  const weights = weightData.map(d => parseFloat(d.currentWeight));
+  const minW = Math.min(...weights, 0) * 0.9;
+  const maxW = Math.max(...weights, 100) * 1.1;
 
   // Get unique machines used
   const allRecs = visitLog.flatMap(v => v.records);
@@ -839,17 +848,36 @@ function AnalysisView({ visitLog, user }) {
   return (
     <div className="view-analysis animate-fade">
       <div className="glass-card chart-container">
-        <h3>月間ジム回数 (1年間)</h3>
+        <h3>月間ジム回数 ({currentYear}年)</h3>
         <div className="bar-chart">
           {monthlyCounts.map((m, i) => (
             <div key={i} className="bar-column">
               <div className="bar-val">{m.count > 0 ? m.count : ''}</div>
               <div className="bar-wrapper">
-                <div className="bar" style={{ height: `${(m.count / maxCount) * 100}%` }}></div>
+                <div className="bar" style={{ height: `${(m.count / maxVisitCount) * 100}%` }}></div>
               </div>
-              <div className="bar-label">{m.month}</div>
+              <div className="bar-label">{m.month.replace('月', '')}</div>
             </div>
           ))}
+        </div>
+      </div>
+
+      <div className="glass-card chart-container">
+        <h3>体重推移 (最新10件)</h3>
+        <div className="line-chart-container">
+          <div className="line-chart">
+            {weightData.map((d, i) => {
+              const x = (i / (weightData.length - 1)) * 100;
+              const y = ((parseFloat(d.currentWeight) - minW) / (maxW - minW)) * 100;
+              return (
+                <div key={i} className="line-point" style={{ left: `${x}%`, bottom: `${y}%` }}>
+                  <div className="point-val">{d.currentWeight}kg</div>
+                  <div className="point-dot"></div>
+                </div>
+              );
+            })}
+            {weightData.length < 2 && <p className="empty-msg">体重の記録が不足しています</p>}
+          </div>
         </div>
       </div>
 
@@ -872,13 +900,19 @@ function AnalysisView({ visitLog, user }) {
         </div>
       </div>
       <style jsx>{`
-        .chart-container { padding: 16px 8px; }
-        .bar-chart { display: flex; justify-content: space-around; align-items: flex-end; height: 140px; margin-top: 16px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .bar-column { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 4px; height: 100%; min-width: 20px; }
-        .bar-wrapper { width: 14px; height: 100%; display: flex; align-items: flex-end; background: rgba(255,255,255,0.02); border-radius: 2px; }
+        .chart-container { padding: 16px 8px; margin-bottom: 12px; }
+        .bar-chart { display: flex; justify-content: space-around; align-items: flex-end; height: 120px; margin-top: 16px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .bar-column { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 4px; height: 100%; min-width: 15px; }
+        .bar-wrapper { width: 10px; height: 100%; display: flex; align-items: flex-end; background: rgba(255,255,255,0.02); border-radius: 2px; }
         .bar { width: 100%; background: var(--primary-color); border-radius: 2px 2px 0 0; transition: height 0.6s ease-out; }
-        .bar-val { font-size: 0.65rem; font-weight: 800; color: var(--primary-color); }
-        .bar-label { font-size: 0.6rem; color: var(--text-muted); white-space: nowrap; }
+        .bar-val { font-size: 0.55rem; font-weight: 800; color: var(--primary-color); }
+        .bar-label { font-size: 0.55rem; color: var(--text-muted); }
+
+        .line-chart-container { height: 150px; margin-top: 24px; position: relative; padding: 0 20px; }
+        .line-chart { width: 100%; height: 100%; position: relative; border-bottom: 1px solid rgba(255,255,255,0.1); border-left: 1px solid rgba(255,255,255,0.1); }
+        .line-point { position: absolute; transform: translate(-50%, 50%); }
+        .point-dot { width: 8px; height: 8px; background: var(--primary-color); border-radius: 50%; box-shadow: 0 0 10px var(--primary-color); }
+        .point-val { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 0.65rem; color: #fff; white-space: nowrap; font-weight: 700; }
       `}</style>
     </div>
   );
