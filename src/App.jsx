@@ -149,8 +149,10 @@ function App() {
     } catch (err) {
       console.error(err);
       if (err.code === 'auth/email-already-in-use') setAuthError('このメールアドレスは既に登録されています。');
+      else if (err.code === 'auth/invalid-email') setAuthError('メールアドレスの形式が正しくありません。');
+      else if (err.code === 'auth/weak-password') setAuthError('パスワードは6文字以上で入力してください。');
       else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') setAuthError('メールアドレスまたはパスワードが正しくありません。');
-      else setAuthError('認証エラーが発生しました。');
+      else setAuthError(`認証エラー: ${err.message}`);
     }
   };
 
