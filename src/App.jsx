@@ -439,38 +439,30 @@ function App() {
 
         {view === 'history' && (
           <div className="view-history animate-fade">
-            <h2>トレーニング履歴</h2>
+            <h2>履歴</h2>
             <div className="history-list">
               {[...visitLog, ...records].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).map((item) => (
                 <div key={item.id} className={`glass-card history-item ${item.type === 'visit-summary' ? 'visit-log-summary' : ''}`}>
                   {item.type === 'visit-summary' ? (
                     <div className="visit-summary-content">
-                      <div className="visit-header">
-                        <div className="visit-title">
-                          <span className="icon">🏛️</span>
-                          ジム滞在まとめ
+                      <div className="visit-header-simple">
+                        <div className="visit-time-range">
+                          {new Date(item.startTime).toLocaleString('ja-JP', {month:'short', day:'numeric', hour: '2-digit', minute:'2-digit'})} 
+                          ～ 
+                          {new Date(item.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                         </div>
-                        <div className="visit-duration-badge">{item.duration}分</div>
-                      </div>
-                      <div className="visit-time-range">
-                        {new Date(item.startTime).toLocaleString('ja-JP', {month:'short', day:'numeric', hour: '2-digit', minute:'2-digit'})} 
-                        ～ 
-                        {new Date(item.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        <div className="visit-duration-simple">{item.duration}分</div>
                       </div>
                       
-                      <div className="visit-records-list">
+                      <div className="visit-records-simple">
                         {item.records.map(rec => (
-                          <div key={rec.id} className="visit-rec-row">
-                            <span className="rec-name">{rec.machineName}</span>
-                            <span className="rec-val">
+                          <div key={rec.id} className="visit-rec-row-simple">
+                            <span className="rec-name-simple">{rec.machineName}</span>
+                            <span className="rec-val-simple">
                               {rec.weight !== undefined ? `${rec.weight}kg / ${rec.reps}回` : `${rec.speed}km/h / ${rec.time}分`}
                             </span>
-                            <div className="rec-actions">
-                              <button onClick={() => handleEditRecord(rec, item.id)}>✎</button>
-                            </div>
                           </div>
                         ))}
-                        {item.records.length === 0 && <p className="empty-sub">実施した設備はありません</p>}
                       </div>
                     </div>
                   ) : (
@@ -585,19 +577,15 @@ function App() {
 
         .history-list { display: flex; flex-direction: column; gap: 12px; }
         .history-item { padding: 16px; display: flex; justify-content: space-between; align-items: center; position: relative; }
-        .visit-log-summary { border-left: 4px solid var(--primary-color); padding: 0; overflow: hidden; }
+        .visit-log-summary { border-left: 4px solid var(--primary-color); padding: 0; overflow: hidden; margin-bottom: 8px; }
         .visit-summary-content { width: 100%; display: flex; flex-direction: column; }
-        .visit-header { background: rgba(255, 255, 255, 0.03); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); }
-        .visit-title { font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
-        .visit-duration-badge { background: var(--primary-color); color: #000; font-weight: 800; padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; }
-        .visit-time-range { padding: 8px 16px; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .visit-date { margin-left: 8px; color: var(--text-main); font-weight: 600; }
-        .visit-records-list { padding: 8px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
-        .visit-rec-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; padding: 4px 0; border-bottom: 1px dashed rgba(255,255,255,0.05); }
-        .rec-name { font-weight: 600; }
-        .rec-val { color: var(--primary-color); font-weight: 700; }
-        .rec-actions button { background: none; color: var(--text-muted); font-size: 0.8rem; padding: 2px 6px; }
-        .empty-sub { font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top: 8px; }
+        .visit-header-simple { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); }
+        .visit-time-range { font-size: 0.9rem; font-weight: 700; color: #fff; }
+        .visit-duration-simple { font-size: 0.85rem; color: var(--primary-color); font-weight: 800; }
+        .visit-records-simple { padding: 8px 16px 12px; display: flex; flex-direction: column; gap: 4px; }
+        .visit-rec-row-simple { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 4px 0; color: var(--text-muted); }
+        .rec-name-simple { font-weight: 500; }
+        .rec-val-simple { color: var(--text-main); font-weight: 600; }
 
         .item-info { display: flex; flex-direction: column; gap: 4px; flex: 1; }
         .item-header-row { display: flex; justify-content: space-between; align-items: flex-start; }
