@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 
-// Anime Handsome Action Assets (White Background)
-import latImg from './assets/machines/lat_pulldown_anime.png';
-import chestImg from './assets/machines/chest_press_anime.png';
-import shoulderImg from './assets/machines/shoulder_press_anime.png';
-import legImg from './assets/machines/leg_press_anime.png';
-import adductionImg from './assets/machines/adduction_anime.png';
-import dipsImg from './assets/machines/dips_anime.png';
-import bicepImg from './assets/machines/bicep_curl_anime.png';
-import treadmillImg from './assets/machines/treadmill_anime.png';
+// Official Machine Images (White BG, No people)
+const latImg = 'https://chocozap.jp/assets/img/studios/service_latpulldown.png';
+const chestImg = 'https://chocozap.jp/assets/img/studios/service_chestpress.png';
+const shoulderImg = 'https://chocozap.jp/assets/img/studios/service_shoulderpress.png';
+const legImg = 'https://chocozap.jp/assets/img/studios/service_legpress.png';
+const adductionImg = 'https://chocozap.jp/assets/img/studios/service_adduction.png';
+const dipsImg = 'https://chocozap.jp/assets/img/studios/service_dips.png';
+const bicepImg = 'https://chocozap.jp/assets/img/studios/service_bicepcurls.png';
+const treadmillImg = 'https://chocozap.jp/assets/img/studios/service_treadmill.png';
+const bikeImg = 'https://chocozap.jp/assets/img/studios/service_bike.png';
+const abbenchImg = 'https://chocozap.jp/assets/img/studios/service_abbench.png';
 
 // 初期マシンデータ
 const INITIAL_MACHINES = [
@@ -21,6 +23,8 @@ const INITIAL_MACHINES = [
   { id: 6, name: 'ディップス', icon: '⬇️', image: dipsImg, type: 'weight' },
   { id: 7, name: 'バイセップスカール', icon: '➰', image: bicepImg, type: 'weight' },
   { id: 8, name: 'トレッドミル', icon: '🏃', image: treadmillImg, type: 'cardio' },
+  { id: 9, name: 'クロスバイク', icon: '🚴', image: bikeImg, type: 'cardio' },
+  { id: 10, name: '腹筋マシン', icon: '🧘', image: abbenchImg, type: 'weight' },
 ];
 
 function App() {
@@ -31,35 +35,26 @@ function App() {
   const [visitLog, setVisitLog] = useLocalStorage('gym-visit-log', []);
   const [currentVisit, setCurrentVisit] = useLocalStorage('gym-current-visit', null);
 
-  // Use a ref to prevent infinite loop
-  const hasFixedRef = React.useRef(false);
-
+  // Rename "Office Press" to "Chest Press" if it exists in stored data and update images to official ones
   React.useEffect(() => {
-    if (hasFixedRef.current) return;
-
     let needsUpdate = false;
     const updatedMachines = machines.map(m => {
       let updated = { ...m };
-      
-      // Force Fix "Office Press" -> "Chest Press"
       if (m.name === 'オフィスプレス') {
         updated.name = 'チェストプレス';
         needsUpdate = true;
       }
-
-      // Force Ensure images are using the ANIME ones from INITIAL_MACHINES
-      const initial = INITIAL_MACHINES.find(im => im.id === m.id);
-      if (initial && !m.image.includes('anime')) {
-        updated.image = initial.image;
+      // Force update images to official URLs from INITIAL_MACHINES
+      const official = INITIAL_MACHINES.find(om => om.id === m.id);
+      if (official && m.image !== official.image) {
+        updated.image = official.image;
         needsUpdate = true;
       }
-
       return updated;
     });
 
     if (needsUpdate) {
       setMachines(updatedMachines);
-      hasFixedRef.current = true;
     }
   }, [machines, setMachines]);
 
@@ -232,7 +227,7 @@ function App() {
         .machine-card:hover { transform: translateY(-4px); border-color: var(--primary-color); }
         
         .machine-img-container { width: 100%; aspect-ratio: 4/3; overflow: hidden; background: #fff; display: flex; align-items: center; justify-content: center; }
-        .machine-thumb { width: 95%; height: 95%; object-fit: contain; }
+        .machine-thumb { width: 100%; height: 100%; object-fit: contain; }
         .machine-name { padding: 12px; font-weight: 600; font-size: 0.85rem; text-align: center; flex: 1; display: flex; align-items: center; justify-content: center; color: #ffffff !important; }
 
         .btn-back { background: none; color: var(--text-muted); margin-bottom: 16px; font-size: 0.9rem; }
