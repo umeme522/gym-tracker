@@ -816,21 +816,14 @@ function WeightForm({ onSubmit, initialData }) {
 }
 
 function AnalysisView({ visitLog, user }) {
-  const totalVisits = visitLog.length;
-  
-  // Calculate average visits per week
-  const firstVisit = visitLog.length > 0 ? new Date(visitLog[visitLog.length-1].timestamp) : new Date();
-  const weeks = Math.max(1, Math.ceil((new Date() - firstVisit) / (7 * 24 * 60 * 60 * 1000)));
-  const avgVisits = (totalVisits / weeks).toFixed(1);
-
-  // Group visits by month for chart
-  const last6Months = Array.from({length: 6}, (_, i) => {
+  // Group visits by month for chart (Last 12 months)
+  const last12Months = Array.from({length: 12}, (_, i) => {
     const d = new Date();
-    d.setMonth(d.getMonth() - (5 - i));
+    d.setMonth(d.getMonth() - (11 - i));
     return d.toLocaleString('ja-JP', {month: 'short'});
   });
 
-  const monthlyCounts = last6Months.map(month => {
+  const monthlyCounts = last12Months.map(month => {
     const count = visitLog.filter(v => 
       new Date(v.timestamp).toLocaleString('ja-JP', {month: 'short'}) === month
     ).length;
@@ -845,19 +838,8 @@ function AnalysisView({ visitLog, user }) {
 
   return (
     <div className="view-analysis animate-fade">
-      <div className="stat-grid">
-        <div className="glass-card stat-card">
-          <span className="val">{totalVisits}</span>
-          <span className="lab">合計入館数</span>
-        </div>
-        <div className="glass-card stat-card">
-          <span className="val">{avgVisits}</span>
-          <span className="lab">週平均(回)</span>
-        </div>
-      </div>
-
       <div className="glass-card chart-container">
-        <h3>月間ジム回数</h3>
+        <h3>月間ジム回数 (1年間)</h3>
         <div className="bar-chart">
           {monthlyCounts.map((m, i) => (
             <div key={i} className="bar-column">
@@ -890,13 +872,13 @@ function AnalysisView({ visitLog, user }) {
         </div>
       </div>
       <style jsx>{`
-        .chart-container { padding: 20px; }
-        .bar-chart { display: flex; justify-content: space-around; align-items: flex-end; height: 150px; margin-top: 24px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .bar-column { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 8px; height: 100%; }
-        .bar-wrapper { width: 30px; height: 100%; display: flex; align-items: flex-end; background: rgba(255,255,255,0.02); border-radius: 4px; }
-        .bar { width: 100%; background: var(--primary-color); border-radius: 4px 4px 0 0; transition: height 0.6s ease-out; }
-        .bar-val { font-size: 0.75rem; font-weight: 800; color: var(--primary-color); }
-        .bar-label { font-size: 0.7rem; color: var(--text-muted); }
+        .chart-container { padding: 16px 8px; }
+        .bar-chart { display: flex; justify-content: space-around; align-items: flex-end; height: 140px; margin-top: 16px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .bar-column { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 4px; height: 100%; min-width: 20px; }
+        .bar-wrapper { width: 14px; height: 100%; display: flex; align-items: flex-end; background: rgba(255,255,255,0.02); border-radius: 2px; }
+        .bar { width: 100%; background: var(--primary-color); border-radius: 2px 2px 0 0; transition: height 0.6s ease-out; }
+        .bar-val { font-size: 0.65rem; font-weight: 800; color: var(--primary-color); }
+        .bar-label { font-size: 0.6rem; color: var(--text-muted); white-space: nowrap; }
       `}</style>
     </div>
   );
