@@ -32,7 +32,7 @@ function App() {
   const [records, setRecords] = useLocalStorage('gym-records', []);
   const [visitLog, setVisitLog] = useLocalStorage('gym-visit-log', []);
   const [currentVisit, setCurrentVisit] = useLocalStorage('gym-current-visit', null);
-  const [user, setUser] = useState(null); // Demo user state
+  const [user, setUser] = useLocalStorage('gym-user-profile', null);
   const [authView, setAuthView] = useState('login');
 
   // Demo Auth Functions
