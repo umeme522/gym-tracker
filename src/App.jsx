@@ -95,16 +95,13 @@ function App() {
                   <>
                     <div className="status-badge active">トレーニング中</div>
                     <div className="visit-info">
-                      <span className="label">開始時刻</span>
-                      <span className="value">{new Date(currentVisit.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                      <span className="label">滞在時間</span>
+                      <DurationCounter startTime={currentVisit.startTime} />
                     </div>
                     <button className="btn-out" onClick={handleCheckOut}>トレーニング終了 👋</button>
                   </>
                 ) : (
-                  <>
-                    <div className="status-badge">お休み中</div>
-                    <button className="btn-in" onClick={handleCheckIn}>トレーニング開始 💪</button>
-                  </>
+                  <button className="btn-in" onClick={handleCheckIn}>トレーニング開始 💪</button>
                 )}
               </div>
             </section>
@@ -250,6 +247,30 @@ function App() {
       `}</style>
     </div>
   );
+}
+
+function DurationCounter({ startTime }) {
+  const [elapsed, setElapsed] = useState('');
+
+  React.useEffect(() => {
+    const update = () => {
+      const diff = new Date() - new Date(startTime);
+      const hours = Math.floor(diff / 3600000);
+      const mins = Math.floor((diff % 3600000) / 60000);
+      const secs = Math.floor((diff % 60000) / 1000);
+      
+      let str = '';
+      if (hours > 0) str += `${hours}時間 `;
+      str += `${mins}分 ${secs}秒`;
+      setElapsed(str);
+    };
+
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
+  }, [startTime]);
+
+  return <span className="value">{elapsed}</span>;
 }
 
 function WeightForm({ onSubmit }) {
