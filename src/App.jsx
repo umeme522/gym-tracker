@@ -40,6 +40,22 @@ function App() {
   const [authView, setAuthView] = useState('login');
   const [authError, setAuthError] = useState('');
   const [editingRecord, setEditingRecord] = useState(null);
+  const [tempVisitRecords, setTempVisitRecords] = useLocalStorage('gym-temp-visit-records', []);
+
+  // Get last record for a specific machine to use as default
+  const getLastRecord = (machineId) => {
+    // Check in records outside visits first
+    let last = records.find(r => r.machineId === machineId);
+    
+    // Then check inside finished visits if not found or if visits have more recent data
+    visitLog.forEach(v => {
+      const found = v.records.find(r => r.machineId === machineId);
+      if (found && (!last || new Date(found.timestamp) > new Date(last.timestamp))) {
+        last = found;
+      }
+    });
+    return last;
+  };
 
   // Demo Auth Functions (Simulating DB validation)
   const handleAuthAction = (profileData, type) => {
@@ -128,7 +144,15 @@ function App() {
       ...data,
       timestamp: new Date().toISOString(),
     };
-    setRecords([newRecord, ...records]);
+
+    if (currentVisit) {
+      // During a visit, save to temp list
+      setTempVisitRecords([newRecord, ...tempVisitRecords]);
+    } else {
+      // Individual record outside visit
+      setRecords([newRecord, ...records]);
+    }
+
     setView('record-success');
     
     // Auto redirect to history after 1.5 seconds
@@ -138,39 +162,77 @@ function App() {
   };
 
   const handleUpdateRecord = (data) => {
-    const updatedRecords = records.map(r => 
-      r.id === editingRecord.id ? { ...r, ...data } : r
-    );
-    setRecords(updatedRecords);
+    if (editingRecord.visitId) {
+      // Edit record inside a finished visit
+      const updatedVisits = visitLog.map(v => {
+        if (v.id === editingRecord.visitId) {
+          return {
+            ...v,
+            records: v.records.map(r => r.id === editingRecord.id ? { ...r, ...data } : r)
+          };
+        }
+        return v;
+      });
+      setVisitLog(updatedVisits);
+    } else {
+      const updatedRecords = records.map(r => 
+        r.id === editingRecord.id ? { ...r, ...data } : r
+      );
+      setRecords(updatedRecords);
+    }
     setEditingRecord(null);
     setView('history');
   };
 
-  const handleDeleteRecord = (id) => {
+  const handleDeleteRecord = (id, visitId = null) => {
     if (window.confirm('この記録を削除しますか？')) {
-      const updatedRecords = records.filter(r => r.id !== id);
-      setRecords(updatedRecords);
+      if (visitId) {
+        const updatedVisits = visitLog.map(v => {
+          if (v.id === visitId) {
+            return { ...v, records: v.records.filter(r => r.id !== id) };
+          }
+          return v;
+        });
+        setVisitLog(updatedVisits);
+      } else {
+        const updatedRecords = records.filter(r => r.id !== id);
+        setRecords(updatedRecords);
+      }
     }
   };
 
-  const handleEditRecord = (record) => {
-    setEditingRecord(record);
-    setSelectedMachine(machines.find(m => m.id === record.machineId));
+  const handleEditRecord = (record, visitId = null) => {
+    setEditingRecord({ ...record, visitId });
+    setSelectedMachine(INITIAL_MACHINES.find(m => m.id === record.machineId));
     setView('record-edit');
   };
 
   const handleCheckIn = () => {
     const now = new Date().toISOString();
     setCurrentVisit({ startTime: now });
-    setVisitLog([{ type: 'in', timestamp: now }, ...visitLog]);
+    setTempVisitRecords([]);
   };
 
   const handleCheckOut = () => {
-    if (!currentVisit) return;
-    const now = new Date().toISOString();
-    const duration = Math.round((new Date(now) - new Date(currentVisit.startTime)) / 60000);
-    setVisitLog([{ type: 'out', timestamp: now, startTime: currentVisit.startTime, duration }, ...visitLog]);
+    const endTime = new Date();
+    const startTime = new Date(currentVisit.startTime);
+    const diffMs = endTime - startTime;
+    const duration = Math.floor(diffMs / 60000); // minutes
+
+    const newVisitLog = {
+      id: Date.now(),
+      type: 'visit-summary',
+      startTime: currentVisit.startTime,
+      endTime: endTime.toISOString(),
+      duration: duration,
+      records: tempVisitRecords,
+      timestamp: endTime.toISOString()
+    };
+
+    setVisitLog([newVisitLog, ...visitLog]);
     setCurrentVisit(null);
+    setTempVisitRecords([]);
+    setView('history');
   };
 
   return (
@@ -240,15 +302,32 @@ function App() {
             <div className="glass-card record-form">
               <div className="form-header">
                 <h2>{selectedMachine.name}</h2>
+                <div className="last-record-hint">
+                  前回: {getLastRecord(selectedMachine.id) ? (
+                    selectedMachine.type === 'cardio' 
+                      ? `${getLastRecord(selectedMachine.id).speed}km/h - ${getLastRecord(selectedMachine.id).time}分`
+                      : `${getLastRecord(selectedMachine.id).weight}kg - ${getLastRecord(selectedMachine.id).reps}回`
+                  ) : 'データなし'}
+                </div>
               </div>
               
               {selectedMachine.type === 'cardio' ? (
-                <CardioForm onSubmit={handleAddRecord} />
+                <CardioForm 
+                  onSubmit={handleAddRecord} 
+                  initialData={getLastRecord(selectedMachine.id)} 
+                />
               ) : (
-                <WeightForm onSubmit={handleAddRecord} />
+                <WeightForm 
+                  onSubmit={handleAddRecord} 
+                  initialData={getLastRecord(selectedMachine.id)} 
+                />
               )}
             </div>
           </div>
+        )}
+
+        {view === 'analysis' && (
+          <AnalysisView records={records} visitLog={visitLog} user={user} />
         )}
 
         {view === 'record-edit' && selectedMachine && editingRecord && (
@@ -286,18 +365,39 @@ function App() {
           <div className="view-history animate-fade">
             <h2>トレーニング履歴</h2>
             <div className="history-list">
-              {[...records, ...visitLog.filter(v => v.type === 'out')].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).map(item => (
-                <div key={item.id || item.timestamp} className={`glass-card history-item ${item.type === 'out' ? 'visit-log' : ''}`}>
-                  {item.type === 'out' ? (
-                    <>
-                      <div className="item-info">
-                        <span className="item-name">トレーニング滞在</span>
-                        <span className="item-date">{new Date(item.timestamp).toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+              {[...visitLog, ...records].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).map((item) => (
+                <div key={item.id} className={`glass-card history-item ${item.type === 'visit-summary' ? 'visit-log-summary' : ''}`}>
+                  {item.type === 'visit-summary' ? (
+                    <div className="visit-summary-content">
+                      <div className="visit-header">
+                        <div className="visit-title">
+                          <span className="icon">🏛️</span>
+                          ジム滞在まとめ
+                        </div>
+                        <div className="visit-duration-badge">{item.duration}分</div>
                       </div>
-                      <div className="item-data visit-duration">
-                        <span>{item.duration} 分間</span>
+                      <div className="visit-time-range">
+                        {new Date(item.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} 
+                        ～ 
+                        {new Date(item.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        <span className="visit-date">({new Date(item.timestamp).toLocaleDateString('ja-JP', {month:'short', day:'numeric'})})</span>
                       </div>
-                    </>
+                      
+                      <div className="visit-records-list">
+                        {item.records.map(rec => (
+                          <div key={rec.id} className="visit-rec-row">
+                            <span className="rec-name">{rec.machineName}</span>
+                            <span className="rec-val">
+                              {rec.weight !== undefined ? `${rec.weight}kg / ${rec.reps}回` : `${rec.speed}km/h / ${rec.time}分`}
+                            </span>
+                            <div className="rec-actions">
+                              <button onClick={() => handleEditRecord(rec, item.id)}>✎</button>
+                            </div>
+                          </div>
+                        ))}
+                        {item.records.length === 0 && <p className="empty-sub">実施した設備はありません</p>}
+                      </div>
+                    </div>
                   ) : (
                     <>
                       <div className="item-info">
@@ -337,8 +437,9 @@ function App() {
 
       {user && (
         <nav className="app-nav glass-card">
-          <button className={view === 'home' ? 'active' : ''} onClick={() => setView('home')}>ホーム</button>
-          <button className={view === 'history' ? 'active' : ''} onClick={() => setView('history')}>履歴</button>
+          <button className={view === 'home' ? 'active' : ''} onClick={() => setView('home')}>🏠 ホーム</button>
+          <button className={view === 'analysis' ? 'active' : ''} onClick={() => setView('analysis')}>📊 分析</button>
+          <button className={view === 'history' ? 'active' : ''} onClick={() => setView('history')}>📜 履歴</button>
         </nav>
       )}
 
@@ -386,7 +487,8 @@ function App() {
 
         .btn-back { background: none; color: var(--text-muted); margin-bottom: 12px; font-size: 0.9rem; padding: 8px 0; }
         .record-form { padding: 24px 16px; display: flex; flex-direction: column; gap: 20px; border-radius: 16px; }
-        .form-header { text-align: center; display: flex; flex-direction: column; gap: 12px; }
+        .form-header { text-align: center; display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+        .last-record-hint { font-size: 0.8rem; color: var(--primary-color); opacity: 0.8; font-weight: 600; }
         .machine-img-large { width: 100%; border-radius: 12px; aspect-ratio: 1/1; object-fit: contain; background: #fff; padding: 10px; border: 1px solid var(--glass-border); }
         
         .view-success { height: 70vh; display: flex; align-items: center; justify-content: center; }
@@ -394,9 +496,34 @@ function App() {
         .success-icon { font-size: 4rem; margin-bottom: 8px; animation: bounce 0.5s ease; }
         @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
 
+        /* Analysis Styles */
+        .view-analysis { display: flex; flex-direction: column; gap: 20px; padding-bottom: 20px; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .stat-card { padding: 16px; text-align: center; display: flex; flex-direction: column; gap: 4px; }
+        .stat-card .val { font-size: 1.6rem; font-weight: 800; color: var(--primary-color); }
+        .stat-card .lab { font-size: 0.75rem; color: var(--text-muted); }
+        .machine-progress { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+        .progress-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .prog-name { font-weight: 600; font-size: 0.9rem; }
+        .prog-val { color: var(--primary-color); font-weight: 700; font-size: 1rem; }
+        .prog-diff { font-size: 0.75rem; color: var(--success-color); margin-left: 4px; }
+
         .history-list { display: flex; flex-direction: column; gap: 12px; }
         .history-item { padding: 16px; display: flex; justify-content: space-between; align-items: center; position: relative; }
-        .history-item.visit-log { border-left: 4px solid var(--accent-color); }
+        .visit-log-summary { border-left: 4px solid var(--primary-color); padding: 0; overflow: hidden; }
+        .visit-summary-content { width: 100%; display: flex; flex-direction: column; }
+        .visit-header { background: rgba(255, 255, 255, 0.03); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); }
+        .visit-title { font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+        .visit-duration-badge { background: var(--primary-color); color: #000; font-weight: 800; padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; }
+        .visit-time-range { padding: 8px 16px; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .visit-date { margin-left: 8px; color: var(--text-main); font-weight: 600; }
+        .visit-records-list { padding: 8px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
+        .visit-rec-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; padding: 4px 0; border-bottom: 1px dashed rgba(255,255,255,0.05); }
+        .rec-name { font-weight: 600; }
+        .rec-val { color: var(--primary-color); font-weight: 700; }
+        .rec-actions button { background: none; color: var(--text-muted); font-size: 0.8rem; padding: 2px 6px; }
+        .empty-sub { font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top: 8px; }
+
         .item-info { display: flex; flex-direction: column; gap: 4px; flex: 1; }
         .item-header-row { display: flex; justify-content: space-between; align-items: flex-start; }
         .item-actions { display: flex; gap: 8px; }
@@ -595,6 +722,62 @@ function WeightForm({ onSubmit, initialData }) {
         {initialData ? '更新を保存する' : '記録を保存する'}
       </button>
       <style jsx>{`.full-width { width: 100%; margin-top: 12px; height: 56px; font-size: 1.1rem; }.form-content { display: flex; flex-direction: column; gap: 24px; }`}</style>
+    </div>
+  );
+}
+
+function AnalysisView({ visitLog, user }) {
+  const totalVisits = visitLog.length;
+  const totalTime = visitLog.reduce((sum, v) => sum + (v.duration || 0), 0);
+  
+  // Calculate average visits per week
+  const firstVisit = visitLog.length > 0 ? new Date(visitLog[visitLog.length-1].timestamp) : new Date();
+  const weeks = Math.max(1, Math.ceil((new Date() - firstVisit) / (7 * 24 * 60 * 60 * 1000)));
+  const avgVisits = (totalVisits / weeks).toFixed(1);
+
+  // Get unique machines used
+  const allRecs = visitLog.flatMap(v => v.records);
+  const uniqueMachines = [...new Set(allRecs.map(r => r.machineName))];
+
+  return (
+    <div className="view-analysis animate-fade">
+      <div className="stat-grid">
+        <div className="glass-card stat-card">
+          <span className="val">{totalVisits}</span>
+          <span className="lab">合計入館数</span>
+        </div>
+        <div className="glass-card stat-card">
+          <span className="val">{totalTime}</span>
+          <span className="lab">累計時間(分)</span>
+        </div>
+        <div className="glass-card stat-card">
+          <span className="val">{avgVisits}</span>
+          <span className="lab">週平均(回)</span>
+        </div>
+        <div className="glass-card stat-card">
+          <span className="val">{uniqueMachines.length}</span>
+          <span className="lab">利用機材数</span>
+        </div>
+      </div>
+
+      <div className="glass-card" style={{ padding: '20px' }}>
+        <h3>成長の記録</h3>
+        <div className="machine-progress">
+          {uniqueMachines.slice(0, 5).map(name => {
+            const mRecs = allRecs.filter(r => r.machineName === name);
+            const latest = mRecs[0];
+            return (
+              <div key={name} className="progress-row">
+                <span className="prog-name">{name}</span>
+                <div className="prog-data">
+                  <span className="prog-val">{latest.weight || latest.speed}{latest.weight ? 'kg' : 'km/h'}</span>
+                </div>
+              </div>
+            );
+          })}
+          {uniqueMachines.length === 0 && <p className="empty-msg">まだトレーニング記録がありません</p>}
+        </div>
+      </div>
     </div>
   );
 }
