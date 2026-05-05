@@ -201,8 +201,8 @@ function App() {
       </nav>
 
       <style jsx>{`
-        .app-container { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 24px; padding-bottom: 100px; }
-        .app-header h1 { font-size: 1.5rem; color: var(--primary-color); text-align: center; font-weight: 800; letter-spacing: 1px; }
+        .app-container { padding: 16px; flex: 1; display: flex; flex-direction: column; gap: 20px; padding-bottom: 100px; max-width: 600px; margin: 0 auto; }
+        .app-header h1 { font-size: 1.4rem; color: var(--primary-color); text-align: center; font-weight: 800; letter-spacing: 1px; margin: 8px 0; }
 
         .status-section { padding: 20px; margin-bottom: 8px; }
         .visit-status { display: flex; flex-direction: column; align-items: center; gap: 16px; }
@@ -217,19 +217,22 @@ function App() {
         .btn-in { background: var(--primary-color); color: #000; }
         .btn-out { background: rgba(255, 107, 107, 0.1); color: var(--danger-color); border: 1px solid var(--danger-color); }
 
-        .machine-grid h3 { margin-bottom: 16px; font-size: 1.1rem; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .machine-card { padding: 0; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s; border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.03); }
+        .machine-grid h3 { margin-bottom: 12px; font-size: 1rem; color: var(--text-muted); }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        @media (min-width: 480px) {
+          .grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        .machine-card { padding: 0; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s; border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.03); border-radius: 12px; }
         .machine-card:hover { transform: translateY(-4px); border-color: var(--primary-color); }
         
         .machine-img-container { width: 100%; aspect-ratio: 4/3; overflow: hidden; background: #fff; display: flex; align-items: center; justify-content: center; }
         .machine-thumb { width: 100%; height: 100%; object-fit: contain; }
         .machine-name { padding: 12px; font-weight: 600; font-size: 0.85rem; text-align: center; flex: 1; display: flex; align-items: center; justify-content: center; color: #ffffff !important; }
 
-        .btn-back { background: none; color: var(--text-muted); margin-bottom: 16px; font-size: 0.9rem; }
-        .record-form { padding: 32px 24px; display: flex; flex-direction: column; gap: 24px; }
-        .form-header { text-align: center; display: flex; flex-direction: column; gap: 16px; }
-        .machine-img-large { width: 100%; border-radius: 12px; aspect-ratio: 16/9; object-fit: contain; background: #fff; padding: 5px; border: 1px solid var(--glass-border); }
+        .btn-back { background: none; color: var(--text-muted); margin-bottom: 12px; font-size: 0.9rem; padding: 8px 0; }
+        .record-form { padding: 24px 16px; display: flex; flex-direction: column; gap: 20px; border-radius: 16px; }
+        .form-header { text-align: center; display: flex; flex-direction: column; gap: 12px; }
+        .machine-img-large { width: 100%; border-radius: 12px; aspect-ratio: 1/1; object-fit: contain; background: #fff; padding: 10px; border: 1px solid var(--glass-border); }
 
         .history-list { display: flex; flex-direction: column; gap: 12px; }
         .history-item { padding: 16px; display: flex; justify-content: space-between; align-items: center; }
