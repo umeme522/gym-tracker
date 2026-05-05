@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 
-// Clean Machine Images (White Background, No people)
-import latImg from './assets/machines/lat_pulldown_clean.png';
-import chestImg from './assets/machines/chest_press_clean.png';
-import shoulderImg from './assets/machines/shoulder_press_clean.png';
-import legImg from './assets/machines/leg_press_clean.png';
-import adductionImg from './assets/machines/adduction_clean.png';
-import dipsImg from './assets/machines/dips_clean.png';
-import bicepImg from './assets/machines/bicep_curl_clean.png';
-import treadmillImg from './assets/machines/treadmill_clean.png';
+// Official Machine Images (White BG, No people)
+const latImg = './lat_pulldown.png';
+const chestImg = './chest_press.png';
+const shoulderImg = './shoulder_press.png';
+const legImg = './leg_press.png';
+const adductionImg = './adduction.png';
+const dipsImg = './dips.png';
+const bicepImg = './bicep_curl.png';
+const treadmillImg = './treadmill.png';
+const bikeImg = './bike.png';
+const abbenchImg = './abbench.png';
 
 // 初期マシンデータ
 const INITIAL_MACHINES = [
@@ -34,8 +36,8 @@ function App() {
   const [authView, setAuthView] = useState('login');
 
   // Demo Auth Functions
-  const handleDemoLogin = (email, password) => {
-    setUser({ email, uid: 'demo-user-123' });
+  const handleDemoLogin = (profileData) => {
+    setUser({ ...profileData, uid: 'demo-user-123' });
     setView('home');
   };
 
@@ -116,6 +118,7 @@ function App() {
           <>
         {view === 'home' && (
           <div className="view-home animate-fade">
+            <ProfileBar user={user} />
             <section className="status-section glass-card">
               <div className="visit-status">
                 {currentVisit ? (
@@ -240,6 +243,13 @@ function App() {
         .app-header h1 { font-size: 1.4rem; color: var(--primary-color); font-weight: 800; letter-spacing: 1px; margin: 0; }
         .btn-logout { background: none; color: var(--text-muted); font-size: 0.8rem; border: 1px solid var(--glass-border); padding: 4px 12px; border-radius: 6px; }
 
+        .profile-bar { padding: 12px 20px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 8px; border-radius: 16px; border-left: 4px solid var(--primary-color); }
+        .profile-user { display: flex; justify-content: space-between; align-items: center; }
+        .profile-user .name { font-weight: 700; font-size: 1.1rem; }
+        .profile-stats { display: flex; gap: 16px; font-size: 0.85rem; color: var(--text-muted); }
+        .profile-stats .stat-val { color: var(--text-main); font-weight: 600; margin-left: 4px; }
+        .bmi-badge { background: rgba(255, 204, 0, 0.1); color: var(--primary-color); padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; }
+
         .status-section { padding: 20px; margin-bottom: 8px; }
         .visit-status { display: flex; flex-direction: column; align-items: center; gap: 16px; }
         .status-badge { background: var(--glass-bg); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; color: var(--text-muted); border: 1px solid var(--glass-border); }
@@ -317,12 +327,33 @@ function DurationCounter({ startTime }) {
 function AuthView({ view, setView, onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [height, setHeight] = useState('170');
+  const [weight, setWeight] = useState('65');
 
   return (
     <div className="auth-view animate-fade">
       <div className="glass-card auth-card">
         <h2>{view === 'login' ? 'ログイン' : '新規会員登録'}</h2>
         <div className="auth-form">
+          {view === 'register' && (
+            <>
+              <div className="input-group">
+                <label>ユーザー名</label>
+                <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="ニックネーム" />
+              </div>
+              <div className="row">
+                <div className="input-group">
+                  <label>身長 (cm)</label>
+                  <input type="number" value={height} onChange={(e) => setHeight(e.target.value)} />
+                </div>
+                <div className="input-group">
+                  <label>体重 (kg)</label>
+                  <input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} />
+                </div>
+              </div>
+            </>
+          )}
           <div className="input-group">
             <label>メールアドレス</label>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="example@mail.com" />
@@ -331,7 +362,7 @@ function AuthView({ view, setView, onLogin }) {
             <label>パスワード</label>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
           </div>
-          <button className="btn-primary" onClick={() => onLogin(email, password)}>
+          <button className="btn-primary" onClick={() => onLogin({ email, username, height, weight })}>
             {view === 'login' ? 'ログインする' : '登録する'}
           </button>
           <button className="btn-switch" onClick={() => setView(view === 'login' ? 'register' : 'login')}>
@@ -340,16 +371,36 @@ function AuthView({ view, setView, onLogin }) {
         </div>
       </div>
       <style jsx>{`
-        .auth-view { height: 80vh; display: flex; align-items: center; justify-content: center; }
-        .auth-card { padding: 40px 24px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 32px; text-align: center; }
-        .auth-form { display: flex; flex-direction: column; gap: 20px; }
-        .input-group { display: flex; flex-direction: column; gap: 8px; text-align: left; }
-        .input-group label { font-size: 0.85rem; color: var(--text-muted); padding-left: 4px; }
-        .input-group input { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); padding: 14px; border-radius: 10px; color: #fff; font-size: 1rem; }
+        .auth-view { height: 90vh; display: flex; align-items: center; justify-content: center; }
+        .auth-card { padding: 32px 20px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 24px; text-align: center; }
+        .auth-form { display: flex; flex-direction: column; gap: 16px; }
+        .input-group { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+        .input-group label { font-size: 0.8rem; color: var(--text-muted); padding-left: 4px; }
+        .input-group input { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); padding: 12px; border-radius: 10px; color: #fff; font-size: 1rem; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .btn-primary { height: 56px; border-radius: 12px; font-weight: 700; margin-top: 8px; }
         .btn-switch { background: none; color: var(--primary-color); font-size: 0.85rem; margin-top: 10px; }
       `}</style>
     </div>
+  );
+}
+
+function ProfileBar({ user }) {
+  const h = parseFloat(user.height) / 100;
+  const w = parseFloat(user.weight);
+  const bmi = (w / (h * h)).toFixed(1);
+
+  return (
+    <section className="profile-bar glass-card">
+      <div className="profile-user">
+        <span className="name">{user.username || 'ゲスト'} 様</span>
+        <span className="bmi-badge">BMI {bmi}</span>
+      </div>
+      <div className="profile-stats">
+        <span>身長: <span className="stat-val">{user.height} cm</span></span>
+        <span>体重: <span className="stat-val">{user.weight} kg</span></span>
+      </div>
+    </section>
   );
 }
 
