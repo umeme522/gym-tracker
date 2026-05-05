@@ -4,7 +4,7 @@ import { getFirestore } from "firebase/firestore";
 
 // TODO: Replace with your Firebase project configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAclOf2qoR-6Qh4a2iooHDqnKT9qAs7zs0",
+  apiKey: "AIzaSyAclOf2qoR-6Qh4a2iooHDqnkT9qAs7zs0",
   authDomain: "gymtracker-app-4d04a.firebaseapp.com",
   projectId: "gymtracker-app-4d04a",
   storageBucket: "gymtracker-app-4d04a.firebasestorage.app",
