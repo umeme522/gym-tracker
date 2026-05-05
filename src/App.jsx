@@ -92,7 +92,7 @@ function App() {
   return (
     <div className="app-container">
       <header className="app-header">
-        <h1>chocoZAP Tracker</h1>
+        <h1>ジムトラッカー</h1>
       </header>
 
       <main className="app-main">
@@ -211,7 +211,7 @@ function App() {
 
       <style jsx>{`
         .app-container { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 24px; padding-bottom: 100px; }
-        .app-header h1 { font-size: 1.5rem; color: var(--primary-color); text-align: center; }
+        .app-header h1 { font-size: 1.5rem; color: var(--primary-color); text-align: center; font-weight: 800; letter-spacing: 1px; }
 
         .status-section { padding: 20px; margin-bottom: 8px; }
         .visit-status { display: flex; flex-direction: column; align-items: center; gap: 16px; }
