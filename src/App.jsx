@@ -2,16 +2,18 @@ import React, { useState } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 
 // Official Machine Images (White BG, No people)
-const latImg = './lat_pulldown.png';
-const chestImg = './chest_press.png';
-const shoulderImg = './shoulder_press.png';
-const legImg = './leg_press.png';
-const adductionImg = './adduction.png';
-const dipsImg = './dips.png';
-const bicepImg = './bicep_curl.png';
-const treadmillImg = './treadmill.png';
-const bikeImg = './bike.png';
-const abbenchImg = './abbench.png';
+// Reliable Local Asset Imports (Bundled by Vite)
+import latImg from './assets/machines/lat_pulldown_clean.png';
+import chestImg from './assets/machines/chest_press_clean.png';
+import shoulderImg from './assets/machines/shoulder_press_clean.png';
+import legImg from './assets/machines/leg_press_clean.png';
+import adductionImg from './assets/machines/adduction_clean.png';
+import dipsImg from './assets/machines/dips_clean.png';
+import bicepImg from './assets/machines/bicep_curl_clean.png';
+import treadmillImg from './assets/machines/treadmill_clean.png';
+// Fallback icons for ones we might be missing clean versions of
+const bikeImg = treadmillImg; 
+const abbenchImg = chestImg;
 
 // 初期マシンデータ
 const INITIAL_MACHINES = [
