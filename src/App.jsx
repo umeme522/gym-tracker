@@ -508,7 +508,6 @@ function App() {
             </div>
           </div>
         )}
-        )}
       </main>
 
       {user && (
