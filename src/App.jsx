@@ -27,6 +27,7 @@ const chestImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols
 const shoulderImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/vertical_align_top/default/24px.svg';
 const legImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/directions_walk/default/24px.svg';
 const adductionImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/join_inner/default/24px.svg';
+const abductionImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/join_outer/default/24px.svg';
 const dipsImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/vertical_align_bottom/default/24px.svg';
 const bicepImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/accessibility_new/default/24px.svg';
 const treadmillImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/directions_run/default/24px.svg';
@@ -37,7 +38,7 @@ const INITIAL_MACHINES = [
   { id: 3, name: 'ショルダープレス', icon: '⬆️', image: shoulderImg, type: 'weight' },
   { id: 4, name: 'レッグプレス', icon: '🦵', image: legImg, type: 'weight' },
   { id: 5, name: 'アダクション', icon: '↔️', image: adductionImg, type: 'weight' },
-  { id: 9, name: 'アブダクション', icon: '↔️', image: adductionImg, type: 'weight' },
+  { id: 9, name: 'アブダクション', icon: '↔️', image: abductionImg, type: 'weight' },
   { id: 6, name: 'ディップス', icon: '⬇️', image: dipsImg, type: 'weight' },
   { id: 7, name: 'バイセップスカール', icon: '💪', image: bicepImg, type: 'weight' },
   { id: 8, name: 'トレッドミル', icon: '🏃', image: treadmillImg, type: 'cardio' },
@@ -349,11 +350,14 @@ function App() {
           <>
         {view === 'home' && (
           <div className="view-home animate-fade">
-            <div className="user-profile-header glass-card">
+            <div className="user-profile-header glass-card" onClick={() => setView('edit-profile')}>
               <div className="user-info">
                 <div className="user-main">
-                  <span className="welcome">こんにちは</span>
-                  <span className="username">{user.username}様</span>
+                  <div className="user-name-row">
+                    <span className="username">{user.username}様</span>
+                    <span className="edit-hint">✎ 編集</span>
+                  </div>
+                  <span className="welcome">トレーニングお疲れ様です</span>
                 </div>
                 <div className="user-stats-row">
                   <div className="user-stat">
@@ -372,7 +376,7 @@ function App() {
                   </div>
                 </div>
               </div>
-              <button className="btn-logout" onClick={handleDemoLogout}>ログアウト</button>
+              <button className="btn-logout" onClick={(e) => { e.stopPropagation(); handleDemoLogout(); }}>ログアウト</button>
             </div>
             <section className="status-section glass-card">
               <div className="visit-status">
@@ -570,11 +574,14 @@ function App() {
         .app-header h1 { font-size: 1.4rem; color: var(--primary-color); font-weight: 800; letter-spacing: 1px; margin: 0; }
         .btn-logout { background: none; color: var(--text-muted); font-size: 0.8rem; border: 1px solid var(--glass-border); padding: 4px 12px; border-radius: 6px; }
 
-        .user-profile-header { padding: 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 12px; border-radius: 16px; border-left: 4px solid var(--primary-color); }
-        .user-info { display: flex; flex-direction: column; gap: 8px; }
+        .user-profile-header { padding: 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 12px; border-radius: 16px; border-left: 4px solid var(--primary-color); cursor: pointer; transition: background 0.2s; }
+        .user-profile-header:hover { background: rgba(255,255,255,0.05); }
+        .user-info { display: flex; flex-direction: column; gap: 8px; flex: 1; }
         .user-main { display: flex; flex-direction: column; }
-        .user-main .welcome { font-size: 0.75rem; color: var(--text-muted); }
+        .user-name-row { display: flex; align-items: baseline; gap: 8px; }
+        .user-main .welcome { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
         .user-main .username { font-weight: 700; font-size: 1.2rem; }
+        .user-main .edit-hint { font-size: 0.7rem; color: var(--primary-color); opacity: 0.8; font-weight: 600; }
         .user-stats-row { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
         .user-stat { display: flex; align-items: baseline; gap: 4px; }
         .user-stat .lab { font-size: 0.7rem; color: var(--text-muted); }
