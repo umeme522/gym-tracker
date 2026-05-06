@@ -430,7 +430,7 @@ function App() {
         )}
 
         {view === 'edit-profile' && (
-          <ProfileEditView user={user} onSave={handleUpdateProfile} onBack={() => setView('home')} />
+          <ProfileEditView user={user} onSave={handleSaveProfile} onBack={() => setView('home')} />
         )}
 
         {view === 'record-success' && (
@@ -508,7 +508,6 @@ function App() {
             </div>
           </div>
         )}
-        </>
         )}
       </main>
 
@@ -842,6 +841,25 @@ function AnalysisView({ visitLog, user, records }) {
       window.location.reload(); 
     } catch (err) { console.error(err); }
   };
+
+  const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+  const monthlyCounts = months.map(m => {
+    const count = visitLog.filter(v => {
+      const vDate = new Date(v.timestamp);
+      return vDate.getFullYear() === currentYear && 
+             vDate.toLocaleString('ja-JP', {month: 'short'}) === m;
+    }).length;
+    return { month: m, count };
+  });
+  const maxVisitCount = Math.max(...monthlyCounts.map(m => m.count), 1);
+
+  const weightData = records
+    .filter(r => r.currentWeight)
+    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+    .slice(-10);
+  const weights = weightData.map(d => parseFloat(d.currentWeight));
+  const minW = Math.min(...weights, 0) * 0.9;
+  const maxW = Math.max(...weights, 100) * 1.1;
 
   return (
     <div className="view-analysis animate-fade" style={{ padding: '0 8px' }}>
