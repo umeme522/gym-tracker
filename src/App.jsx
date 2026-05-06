@@ -21,27 +21,16 @@ import {
   deleteDoc
 } from 'firebase/firestore';
 
-// Reliable Icons for machines (Google Material Symbols)
-const latImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/fitness_center/default/24px.svg';
-const chestImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/compress/default/24px.svg';
-const shoulderImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/vertical_align_top/default/24px.svg';
-const legImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/directions_walk/default/24px.svg';
-const adductionImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/join_inner/default/24px.svg';
-const abductionImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/join_outer/default/24px.svg';
-const dipsImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/vertical_align_bottom/default/24px.svg';
-const bicepImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/accessibility_new/default/24px.svg';
-const treadmillImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/directions_run/default/24px.svg';
-
 const INITIAL_MACHINES = [
-  { id: 1, name: 'ラットプルダウン', icon: '🏋️', image: latImg, type: 'weight' },
-  { id: 2, name: 'チェストプレス', icon: '💪', image: chestImg, type: 'weight' },
-  { id: 3, name: 'ショルダープレス', icon: '⬆️', image: shoulderImg, type: 'weight' },
-  { id: 4, name: 'レッグプレス', icon: '🦵', image: legImg, type: 'weight' },
-  { id: 5, name: 'アダクション', icon: '↔️', image: adductionImg, type: 'weight' },
-  { id: 9, name: 'アブダクション', icon: '↔️', image: abductionImg, type: 'weight' },
-  { id: 6, name: 'ディップス', icon: '⬇️', image: dipsImg, type: 'weight' },
-  { id: 7, name: 'バイセップスカール', icon: '💪', image: bicepImg, type: 'weight' },
-  { id: 8, name: 'トレッドミル', icon: '🏃', image: treadmillImg, type: 'cardio' },
+  { id: 1, name: 'ラットプルダウン', icon: '🏋️', type: 'weight' },
+  { id: 2, name: 'チェストプレス', icon: '💪', type: 'weight' },
+  { id: 3, name: 'ショルダープレス', icon: '⬆️', type: 'weight' },
+  { id: 4, name: 'レッグプレス', icon: '🦵', type: 'weight' },
+  { id: 5, name: 'アダクション', icon: '🦵', type: 'weight' },
+  { id: 9, name: 'アブダクション', icon: '🍑', type: 'weight' },
+  { id: 6, name: 'ディップス', icon: '⬇️', type: 'weight' },
+  { id: 7, name: 'バイセップスカール', icon: '💪', type: 'weight' },
+  { id: 8, name: 'トレッドミル', icon: '🏃', type: 'cardio' },
 ];
 
 function App() {
@@ -612,8 +601,7 @@ function App() {
         .machine-card { padding: 0; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s; border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.03); border-radius: 12px; }
         .machine-card:hover { transform: translateY(-4px); border-color: var(--primary-color); }
         
-        .machine-img-container { width: 100%; aspect-ratio: 4/3; overflow: hidden; background: #fff; display: flex; align-items: center; justify-content: center; }
-        .machine-thumb { width: 60%; height: 60%; object-fit: contain; opacity: 0.7; }
+        .machine-emoji-container { width: 100%; aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; font-size: 3rem; background: rgba(255,255,255,0.03); border-radius: 12px 12px 0 0; }
         .machine-name { padding: 12px; font-weight: 600; font-size: 0.85rem; text-align: center; flex: 1; display: flex; align-items: center; justify-content: center; color: #ffffff !important; }
 
         .btn-back { background: none; color: var(--text-muted); margin-bottom: 12px; font-size: 0.9rem; padding: 8px 0; }
