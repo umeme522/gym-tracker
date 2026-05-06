@@ -508,9 +508,9 @@ function App() {
             </div>
           </div>
         )}
-            </React.Fragment>
-          )}
-      </main>
+      </React.Fragment>
+    )}
+  </main>
 
       {user && (
         <nav className="app-nav glass-card">
