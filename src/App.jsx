@@ -36,7 +36,7 @@ const INITIAL_MACHINES = [
 function App() {
   const [view, setView] = useState('home');
   const [selectedMachine, setSelectedMachine] = useState(null);
-  const [machines, setMachines] = useLocalStorage('gym-machines', INITIAL_MACHINES);
+  const [machines, setMachines] = useLocalStorage('gym-machines-v2', INITIAL_MACHINES);
   const [records, setRecords] = useState([]);
   const [visitLog, setVisitLog] = useState([]);
   const [currentVisit, setCurrentVisit] = useLocalStorage('gym-current-visit', null);
@@ -170,15 +170,14 @@ function App() {
     }
   };
 
-  const handleUpdateProfile = async (newData) => {
-    if (!user) return;
+  const handleSaveProfile = async (updatedData) => {
     try {
-      await updateDoc(doc(db, 'users', user.uid), newData);
-      setUser({ ...user, ...newData });
+      const updatedUser = { ...user, ...updatedData };
+      await setDoc(doc(db, 'users', user.uid), updatedUser);
+      setUser(updatedUser);
       setView('home');
-    } catch (err) {
-      console.error(err);
-      alert('プロフィールの更新に失敗しました。');
+    } catch (error) {
+      console.error('Error updating profile:', error);
     }
   };
 
@@ -205,7 +204,7 @@ function App() {
 
       // Ensure images are using the clean ones from INITIAL_MACHINES
       const initial = INITIAL_MACHINES.find(im => im.id === m.id);
-      if (initial && !m.image.includes('clean')) {
+      if (initial && !m.image?.includes('clean')) {
         updated.image = initial.image;
         needsUpdate = true;
       }
@@ -384,10 +383,10 @@ function App() {
                         <DurationCounter startTime={currentVisit.startTime} />
                       </div>
                     </div>
-                    <button className="btn-out" onClick={handleCheckOut}>トレーニング終了 👋</button>
+                    <button className="btn-out" style={{ width: '100%' }} onClick={handleCheckOut}>トレーニング終了 👋</button>
                   </>
                 ) : (
-                  <button className="btn-in" onClick={handleCheckIn}>トレーニング開始 💪</button>
+                  <button className="btn-in" style={{ width: '100%' }} onClick={handleCheckIn}>トレーニング開始 💪</button>
                 )}
               </div>
             </section>
@@ -404,9 +403,7 @@ function App() {
                       setView('record');
                     }}
                   >
-                    <div className="machine-img-container">
-                      <img src={m.image} alt={m.name} className="machine-thumb" />
-                    </div>
+                    <div className="machine-emoji-container">{m.icon}</div>
                     <span className="machine-name">{m.name}</span>
                   </button>
                 ))}
@@ -567,8 +564,8 @@ function App() {
         .user-info { display: flex; flex-direction: column; gap: 12px; flex: 1; }
         .user-header-main { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
         .user-name-row { display: flex; align-items: baseline; gap: 8px; }
-        .user-main .username { font-weight: 700; font-size: 1.2rem; }
-        .user-main .edit-hint { font-size: 0.7rem; color: var(--primary-color); opacity: 0.8; font-weight: 600; }
+        .username { font-weight: 700; font-size: 1.2rem; }
+        .edit-hint { font-size: 0.7rem; color: var(--primary-color); opacity: 0.8; font-weight: 600; }
         .btn-logout-top { background: none; color: var(--text-muted); font-size: 0.7rem; border: 1px solid var(--glass-border); padding: 4px 10px; border-radius: 6px; }
         .user-stats-row { display: flex; align-items: center; gap: 12px; }
         .user-stat { display: flex; align-items: baseline; gap: 4px; }
@@ -587,9 +584,10 @@ function App() {
         .visit-info .label { font-size: 0.8rem; color: var(--text-muted); }
         input, select, textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.05); color: #fff; font-size: 16px; box-sizing: border-box; }
         input:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 2px rgba(255, 204, 0, 0.2); }
-        .btn-primary, .btn-secondary, .btn-in, .btn-out, .btn-finish, .btn-save { height: 48px; display: flex; align-items: center; justify-content: center; font-weight: 700; border-radius: 12px; font-size: 1rem; }
+        .btn-in, .btn-out { width: 100%; height: 56px; border-radius: 12px; font-weight: 700; font-size: 1.1rem; border: none; cursor: pointer; transition: opacity 0.2s; }
         .btn-in { background: var(--primary-color); color: #000; }
         .btn-out { background: rgba(255, 107, 107, 0.1); color: var(--danger-color); border: 1px solid var(--danger-color); }
+        .btn-in:active, .btn-out:active { opacity: 0.7; }
 
         .machine-grid h3 { margin-bottom: 12px; font-size: 1rem; color: var(--text-muted); }
         .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
@@ -692,6 +690,7 @@ function AuthView({ view, setView, onAuth, error }) {
   const [username, setUsername] = useState('');
   const [height, setHeight] = useState('170');
   const [weight, setWeight] = useState('65');
+  const [bodyFat, setBodyFat] = useState('20');
 
   return (
     <div className="auth-view animate-fade">
@@ -790,6 +789,7 @@ function ProfileEditView({ user, onSave, onBack }) {
   const [username, setUsername] = useState(user.username || '');
   const [height, setHeight] = useState(user.height || '');
   const [weight, setWeight] = useState(user.weight || '');
+  const [bodyFat, setBodyFat] = useState(user.bodyFat || '');
 
   return (
     <div className="view-record animate-fade">
@@ -816,17 +816,29 @@ function ProfileEditView({ user, onSave, onBack }) {
                 style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', padding: '12px', borderRadius: '10px', color: '#fff', width: '100%', boxSizing: 'border-box' }}
               />
             </div>
+          <div className="row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div className="input-group">
               <label>体重 (kg)</label>
               <input 
                 type="number" 
+                step="0.1"
                 value={weight} 
                 onChange={(e) => setWeight(e.target.value)} 
                 style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', padding: '12px', borderRadius: '10px', color: '#fff', width: '100%', boxSizing: 'border-box' }}
               />
             </div>
+            <div className="input-group">
+              <label>体脂肪 (%)</label>
+              <input 
+                type="number" 
+                step="0.1"
+                value={bodyFat} 
+                onChange={(e) => setBodyFat(e.target.value)} 
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', padding: '12px', borderRadius: '10px', color: '#fff', width: '100%', boxSizing: 'border-box' }}
+              />
+            </div>
           </div>
-          <button className="btn-primary" style={{ width: '100%', marginTop: '16px' }} onClick={() => onSave({ username, height, weight })}>
+          <button className="btn-primary" style={{ width: '100%', marginTop: '16px' }} onClick={() => onSave({ username, height, weight, bodyFat })}>
             変更を保存する
           </button>
         </div>
