@@ -36,7 +36,7 @@ const INITIAL_MACHINES = [
 function App() {
   const [view, setView] = useState('home');
   const [selectedMachine, setSelectedMachine] = useState(null);
-  const [machines, setMachines] = useLocalStorage('gym-machines-v2', INITIAL_MACHINES);
+  const [machines, setMachines] = useLocalStorage('gym-machines-v3', INITIAL_MACHINES);
   const [records, setRecords] = useState([]);
   const [visitLog, setVisitLog] = useState([]);
   const [currentVisit, setCurrentVisit] = useLocalStorage('gym-current-visit', null);
