@@ -338,58 +338,24 @@ function App() {
           <>
         {view === 'home' && (
           <div className="view-home animate-fade">
-            <div className="user-profile-header glass-card" onClick={() => setView('edit-profile')}>
-              <div className="user-info">
-                <div className="user-header-main">
-                  <div className="user-name-row">
-                    <span className="username">{user.username}様</span>
-                    <span className="edit-hint">✎ 編集</span>
-                  </div>
-                  <button className="btn-logout-top" onClick={(e) => { e.stopPropagation(); handleDemoLogout(); }}>ログアウト</button>
-                </div>
-                
-                <div className="user-stats-row">
-                  <div className="user-stat">
-                    <span className="lab">身長</span>
-                    <span className="val">{user.height}<span className="unit">cm</span></span>
-                  </div>
-                  <div className="user-stat-divider"></div>
-                  <div className="user-stat">
-                    <span className="lab">体重</span>
-                    <span className="val">{user.weight}<span className="unit">kg</span></span>
-                  </div>
-                  <div className="user-stat-divider"></div>
-                  <div className="user-stat">
-                    <span className="lab">体脂肪</span>
-                    <span className="val">{user.bodyFat || '--'}<span className="unit">%</span></span>
-                  </div>
-                </div>
+            <div className="user-profile-minimal" onClick={() => setView('edit-profile')}>
+              <div className="user-name-row">
+                <span className="username">{user.username}様</span>
+                <span className="edit-hint">プロフィール編集 ✎</span>
               </div>
+              <button className="btn-logout-minimal" onClick={(e) => { e.stopPropagation(); handleDemoLogout(); }}>ログアウト</button>
             </div>
-            <section className="status-section glass-card">
-              <div className="visit-status">
-                {currentVisit ? (
-                  <>
-                    <div className="status-badge active">トレーニング中</div>
-                    <div className="visit-info">
-                      <div className="info-row">
-                        <span className="label">開始日時</span>
-                        <span className="value-sub">
-                          {new Date(currentVisit.startTime).toLocaleString('ja-JP', {month: 'numeric', day: 'numeric', hour: '2-digit', minute:'2-digit'})}
-                        </span>
-                      </div>
-                      <div className="info-row">
-                        <span className="label">滞在時間</span>
-                        <DurationCounter startTime={currentVisit.startTime} />
-                      </div>
-                    </div>
-                    <button className="btn-out" style={{ width: '100%' }} onClick={handleCheckOut}>トレーニング終了 👋</button>
-                  </>
-                ) : (
-                  <button className="btn-in" style={{ width: '100%' }} onClick={handleCheckIn}>トレーニング開始 💪</button>
-                )}
-              </div>
-            </section>
+            
+            {currentVisit ? (
+              <button className="btn-out-wide" onClick={handleCheckOut}>
+                トレーニング終了 👋
+                <small style={{display:'block', fontSize:'0.7rem', opacity:0.6, marginTop:4}}>
+                  {new Date(currentVisit.startTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} 開始
+                </small>
+              </button>
+            ) : (
+              <button className="btn-in-wide" onClick={handleCheckIn}>トレーニング開始 💪</button>
+            )}
             
             <section className="machine-grid">
               <h3>マシンを選択</h3>
@@ -584,21 +550,21 @@ function App() {
         .visit-info .label { font-size: 0.8rem; color: var(--text-muted); }
         input, select, textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.05); color: #fff; font-size: 16px; box-sizing: border-box; }
         input:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 2px rgba(255, 204, 0, 0.2); }
-        .btn-in, .btn-out { width: 100%; height: 56px; border-radius: 12px; font-weight: 700; font-size: 1.1rem; border: none; cursor: pointer; transition: opacity 0.2s; }
-        .btn-in { background: var(--primary-color); color: #000; }
-        .btn-out { background: rgba(255, 107, 107, 0.1); color: var(--danger-color); border: 1px solid var(--danger-color); }
-        .btn-in:active, .btn-out:active { opacity: 0.7; }
-
-        .machine-grid h3 { margin-bottom: 12px; font-size: 1rem; color: var(--text-muted); }
-        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        @media (min-width: 480px) {
-          .grid { grid-template-columns: repeat(3, 1fr); }
-        }
-        .machine-card { padding: 0; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s; border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.03); border-radius: 12px; }
-        .machine-card:hover { transform: translateY(-4px); border-color: var(--primary-color); }
+        .glass-card { background: rgba(255, 255, 255, 0.03); border-radius: 16px; border: none; }
+        .user-profile-minimal { padding: 12px 0; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .user-name-row { display: flex; align-items: baseline; gap: 12px; }
+        .username { font-weight: 700; font-size: 1.3rem; color: #fff; }
+        .edit-hint { font-size: 0.8rem; color: var(--primary-color); opacity: 0.8; }
+        .btn-logout-minimal { background: none; border: none; color: var(--text-muted); font-size: 0.75rem; padding: 8px; }
         
-        .machine-emoji-container { width: 100%; aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; font-size: 3rem; background: rgba(255,255,255,0.03); border-radius: 12px 12px 0 0; }
-        .machine-name { padding: 12px; font-weight: 600; font-size: 0.85rem; text-align: center; flex: 1; display: flex; align-items: center; justify-content: center; color: #ffffff !important; }
+        .action-section { display: none; }
+        .btn-in-wide { width: 100%; height: 80px; background: var(--primary-color); color: #000; border-radius: 12px; font-weight: 800; font-size: 1.5rem; border: none; margin: 12px 0; }
+        .btn-out-wide { width: 100%; height: 80px; background: #333; color: #fff; border-radius: 12px; font-weight: 700; font-size: 1.3rem; border: none; margin: 12px 0; }
+        
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .machine-card { background: rgba(255,255,255,0.03); border-radius: 16px; border: none; padding: 24px 12px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .machine-emoji-container { font-size: 3rem; }
+        .machine-name { font-size: 0.9rem; font-weight: 600; color: #fff; }
 
         .btn-back { background: none; color: var(--text-muted); margin-bottom: 12px; font-size: 0.9rem; padding: 8px 0; }
         .record-form { padding: 24px 16px; display: flex; flex-direction: column; gap: 20px; border-radius: 16px; }
@@ -863,37 +829,36 @@ function WeightForm({ onSubmit, initialData }) {
 }
 
 function AnalysisView({ visitLog, user, records }) {
-  // Monthly Chart: Jan to Dec order
-  const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
   const currentYear = new Date().getFullYear();
+  const [wIn, setWIn] = useState(user.weight || '');
+  const [fIn, setFIn] = useState(user.bodyFat || '');
   
-  const monthlyCounts = months.map(m => {
-    const count = visitLog.filter(v => {
-      const vDate = new Date(v.timestamp);
-      return vDate.getFullYear() === currentYear && 
-             vDate.toLocaleString('ja-JP', {month: 'short'}) === m;
-    }).length;
-    return { month: m, count };
-  });
-
-  const maxVisitCount = Math.max(...monthlyCounts.map(m => m.count), 1);
-
-  // Weight Chart Data (Last 10 entries)
-  const weightData = records
-    .filter(r => r.currentWeight)
-    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-    .slice(-10);
-
-  const weights = weightData.map(d => parseFloat(d.currentWeight));
-  const minW = Math.min(...weights, 0) * 0.9;
-  const maxW = Math.max(...weights, 100) * 1.1;
-
-  // Get unique machines used
-  const allRecs = visitLog.flatMap(v => v.records);
-  const uniqueMachines = [...new Set(allRecs.map(r => r.machineName))];
+  const handleQuickSave = async () => {
+    if (!user.uid) return;
+    try {
+      const updatedUser = { ...user, weight: wIn, bodyFat: fIn };
+      await setDoc(doc(db, 'users', user.uid), updatedUser);
+      alert('本日の体重を記録しました');
+      window.location.reload(); 
+    } catch (err) { console.error(err); }
+  };
 
   return (
-    <div className="view-analysis animate-fade">
+    <div className="view-analysis animate-fade" style={{ padding: '0 8px' }}>
+      <div className="quick-log" style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', marginBottom: '24px' }}>
+        <h4 style={{ margin: '0 0 16px 0', fontSize: '1rem', color: 'var(--primary-color)', fontWeight: 800 }}>本日の測定記録</h4>
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>体重 (kg)</label>
+            <input type="number" step="0.1" value={wIn} onChange={(e) => setWIn(e.target.value)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '12px', borderRadius: '10px', color: '#fff', width: '100%' }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>体脂肪 (%)</label>
+            <input type="number" step="0.1" value={fIn} onChange={(e) => setFIn(e.target.value)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '12px', borderRadius: '10px', color: '#fff', width: '100%' }} />
+          </div>
+        </div>
+        <button onClick={handleQuickSave} style={{ width: '100%', height: '44px', background: 'var(--primary-color)', color: '#000', borderRadius: '10px', fontWeight: 700, border: 'none' }}>記録する</button>
+      </div>
       <div className="glass-card chart-container">
         <h3>トレーニング回数（月別） ({currentYear}年)</h3>
         <div className="bar-chart">
