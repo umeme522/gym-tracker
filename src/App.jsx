@@ -475,8 +475,7 @@ function App() {
                         ))}
                       </div>
                     </div>
-                  ) : (
-                    <>
+                    <React.Fragment>
                       <div className="item-info">
                         <div className="item-header-row">
                           <span className="item-name">{item.machineName}</span>
@@ -489,18 +488,18 @@ function App() {
                       </div>
                       <div className="item-data">
                         {item.weight !== undefined ? (
-                          <>
+                          <React.Fragment>
                             <span className="item-weight">{item.weight} kg</span>
                             <span className="item-reps">{item.reps} 回</span>
-                          </>
+                          </React.Fragment>
                         ) : (
-                          <>
+                          <React.Fragment>
                             <span className="item-speed">{item.speed} km/h</span>
                             <span className="item-time">{item.time} 分</span>
-                          </>
+                          </React.Fragment>
                         )}
                       </div>
-                    </>
+                    </React.Fragment>
                   )}
                 </div>
               ))}
@@ -508,9 +507,9 @@ function App() {
             </div>
           </div>
         )}
-          </React.Fragment>
-        )}
-      </main>
+      </React.Fragment>
+    )}
+  </main>
 
       {user && (
         <nav className="app-nav glass-card">
