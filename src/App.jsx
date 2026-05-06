@@ -883,7 +883,7 @@ function AnalysisView({ visitLog, user, records }) {
   return (
     <div className="view-analysis animate-fade">
       <div className="glass-card chart-container">
-        <h3>月間ジム回数 ({currentYear}年)</h3>
+        <h3>トレーニング回数（月別） ({currentYear}年)</h3>
         <div className="bar-chart">
           {monthlyCounts.map((m, i) => (
             <div key={i} className="bar-column">
