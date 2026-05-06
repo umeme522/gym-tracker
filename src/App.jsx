@@ -374,8 +374,10 @@ function App() {
                     <div className="status-badge active">トレーニング中</div>
                     <div className="visit-info">
                       <div className="info-row">
-                        <span className="label">開始時刻</span>
-                        <span className="value-sub">{new Date(currentVisit.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        <span className="label">開始日時</span>
+                        <span className="value-sub">
+                          {new Date(currentVisit.startTime).toLocaleString('ja-JP', {month: 'numeric', day: 'numeric', hour: '2-digit', minute:'2-digit'})}
+                        </span>
                       </div>
                       <div className="info-row">
                         <span className="label">滞在時間</span>
