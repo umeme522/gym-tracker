@@ -22,8 +22,8 @@ import {
 } from 'firebase/firestore';
 
 const INITIAL_MACHINES = [
-  { id: 1, name: 'ラットプルダウン', icon: '🏋️', type: 'weight' },
-  { id: 2, name: 'チェストプレス', icon: '💪', type: 'weight' },
+  { id: 1, name: 'ラットプルダウン', icon: '🦅', type: 'weight' },
+  { id: 2, name: 'チェストプレス', icon: '🥊', type: 'weight' },
   { id: 3, name: 'ショルダープレス', icon: '⬆️', type: 'weight' },
   { id: 4, name: 'レッグプレス', icon: '🦶', type: 'weight' },
   { id: 5, name: 'アダクション', icon: '🦵', type: 'weight' },
