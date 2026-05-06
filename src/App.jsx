@@ -350,6 +350,7 @@ function App() {
                     <span className="lab">身長</span>
                     <span className="val">{user.height}<span className="unit">cm</span></span>
                   </div>
+                  <div className="user-stat-divider"></div>
                   <div className="user-stat">
                     <span className="lab">体重</span>
                     <span className="val">{user.weight}<span className="unit">kg</span></span>
@@ -556,12 +557,13 @@ function App() {
         .user-info { display: flex; flex-direction: column; gap: 8px; }
         .user-main { display: flex; flex-direction: column; }
         .user-main .welcome { font-size: 0.75rem; color: var(--text-muted); }
-        .user-main .username { font-weight: 700; font-size: 1.1rem; }
-        .user-stats-row { display: flex; gap: 24px; }
-        .user-stat span { display: block; }
-        .user-stat .val { font-size: 1.2rem; font-weight: 800; color: var(--primary-color); line-height: 1.2; }
-        .user-stat .unit { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
-        .user-stat .lab { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
+        .user-main .username { font-weight: 700; font-size: 1.2rem; }
+        .user-stats-row { display: flex; align-items: center; gap: 16px; margin-top: 4px; }
+        .user-stat { display: flex; align-items: baseline; gap: 6px; }
+        .user-stat .lab { font-size: 0.75rem; color: var(--text-muted); }
+        .user-stat .val { font-size: 1.1rem; font-weight: 800; color: var(--primary-color); }
+        .user-stat .unit { font-size: 0.7rem; color: var(--text-muted); margin-left: 2px; }
+        .user-stat-divider { width: 1px; height: 12px; background: rgba(255,255,255,0.1); }
 
         .status-section { padding: 20px; margin-bottom: 8px; }
         .visit-status { display: flex; flex-direction: column; align-items: center; gap: 16px; }
