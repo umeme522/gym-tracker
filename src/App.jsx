@@ -341,7 +341,7 @@ function App() {
             <div className="user-profile-minimal" onClick={() => setView('edit-profile')}>
               <div className="user-name-row">
                 <span className="username">{user.username}様</span>
-                <span className="edit-hint">プロフィール編集 ✎</span>
+                <span className="edit-hint">名前を変更 ✎</span>
               </div>
               <button className="btn-logout-minimal" onClick={(e) => { e.stopPropagation(); handleDemoLogout(); }}>ログアウト</button>
             </div>
@@ -430,7 +430,7 @@ function App() {
         )}
 
         {view === 'edit-profile' && (
-          <ProfileEditView user={user} onSave={handleSaveProfile} onBack={() => setView('home')} />
+          <NameEditView user={user} onSave={handleSaveProfile} onBack={() => setView('home')} />
         )}
 
         {view === 'record-success' && (
@@ -751,20 +751,17 @@ function ProfileBar({ user, onEdit }) {
   );
 }
 
-function ProfileEditView({ user, onSave, onBack }) {
+function NameEditView({ user, onSave, onBack }) {
   const [username, setUsername] = useState(user.username || '');
-  const [height, setHeight] = useState(user.height || '');
-  const [weight, setWeight] = useState(user.weight || '');
-  const [bodyFat, setBodyFat] = useState(user.bodyFat || '');
 
   return (
     <div className="view-record animate-fade">
       <button className="btn-back" onClick={onBack}>← 戻る</button>
       <div className="glass-card record-form">
-        <h2>プロフィール編集</h2>
+        <h2>名前を変更</h2>
         <div className="auth-form" style={{ width: '100%' }}>
           <div className="input-group">
-            <label>ユーザー名</label>
+            <label>新しいお名前</label>
             <input 
               type="text" 
               value={username} 
@@ -772,40 +769,7 @@ function ProfileEditView({ user, onSave, onBack }) {
               style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', padding: '12px', borderRadius: '10px', color: '#fff', width: '100%', boxSizing: 'border-box' }}
             />
           </div>
-          <div className="row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <div className="input-group">
-              <label>身長 (cm)</label>
-              <input 
-                type="number" 
-                value={height} 
-                onChange={(e) => setHeight(e.target.value)} 
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', padding: '12px', borderRadius: '10px', color: '#fff', width: '100%', boxSizing: 'border-box' }}
-              />
-            </div>
-          </div>
-          <div className="row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <div className="input-group">
-              <label>体重 (kg)</label>
-              <input 
-                type="number" 
-                step="0.1"
-                value={weight} 
-                onChange={(e) => setWeight(e.target.value)} 
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', padding: '12px', borderRadius: '10px', color: '#fff', width: '100%', boxSizing: 'border-box' }}
-              />
-            </div>
-            <div className="input-group">
-              <label>体脂肪 (%)</label>
-              <input 
-                type="number" 
-                step="0.1"
-                value={bodyFat} 
-                onChange={(e) => setBodyFat(e.target.value)} 
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', padding: '12px', borderRadius: '10px', color: '#fff', width: '100%', boxSizing: 'border-box' }}
-              />
-            </div>
-          </div>
-          <button className="btn-primary" style={{ width: '100%', marginTop: '16px' }} onClick={() => onSave({ username, height, weight, bodyFat })}>
+          <button className="btn-primary" style={{ width: '100%', marginTop: '16px' }} onClick={() => onSave({ username })}>
             変更を保存する
           </button>
         </div>
