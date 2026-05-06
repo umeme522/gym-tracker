@@ -475,6 +475,7 @@ function App() {
                         ))}
                       </div>
                     </div>
+                  ) : (
                     <React.Fragment>
                       <div className="item-info">
                         <div className="item-header-row">
