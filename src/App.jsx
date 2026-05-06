@@ -30,8 +30,6 @@ const adductionImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesym
 const dipsImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/vertical_align_bottom/default/24px.svg';
 const bicepImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/accessibility_new/default/24px.svg';
 const treadmillImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/directions_run/default/24px.svg';
-const bikeImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/pedal_bike/default/24px.svg';
-const abbenchImg = 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/straighten/default/24px.svg';
 
 const INITIAL_MACHINES = [
   { id: 1, name: 'ラットプルダウン', icon: '🏋️', image: latImg, type: 'weight' },
