@@ -782,6 +782,7 @@ function ProfileEditView({ user, onSave, onBack }) {
                 style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', padding: '12px', borderRadius: '10px', color: '#fff', width: '100%', boxSizing: 'border-box' }}
               />
             </div>
+          </div>
           <div className="row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div className="input-group">
               <label>体重 (kg)</label>
