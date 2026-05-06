@@ -44,6 +44,7 @@ function App() {
   const [authView, setAuthView] = useState('login');
   const [authError, setAuthError] = useState('');
   const [editingRecord, setEditingRecord] = useState(null);
+  const [lastWorkoutSummary, setLastWorkoutSummary] = useState(null);
   const [tempVisitRecords, setTempVisitRecords] = useLocalStorage('gym-temp-visit-records', []);
   const [loading, setLoading] = useState(true);
 
@@ -317,12 +318,34 @@ function App() {
 
     try {
       await addDoc(collection(db, 'users', user.uid, 'visitLogs'), newVisitLog);
+      
+      // シェア用テキストの生成
+      const dateStr = new Date().toLocaleDateString('ja-JP', {month:'short', day:'numeric'});
+      const machineNames = [...new Set(tempVisitRecords.map(r => r.machineName))].join('、');
+      const shareText = `【本日のワークアウト】\n📅 ${dateStr}\n⏱️ 滞在: ${duration}分\n💪 実施: ${machineNames}\n\n#GymTracker で記録完了！\nhttps://umeme522.github.io/gym-tracker/`;
+      setLastWorkoutSummary(shareText);
+
       setCurrentVisit(null);
       setTempVisitRecords([]);
-      setView('history');
+      setView('record-success'); // 履歴ではなく成功画面へ
     } catch (err) {
       console.error(err);
       alert('終了の保存に失敗しました。');
+    }
+  };
+
+  const handleShare = async () => {
+    if (!lastWorkoutSummary) return;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: '本日のワークアウト記録',
+          text: lastWorkoutSummary
+        });
+      } catch (err) { console.error(err); }
+    } else {
+      await navigator.clipboard.writeText(lastWorkoutSummary);
+      alert('クリップボードにコピーしました！SNSに貼り付けてシェアしてください。');
     }
   };
 
@@ -446,6 +469,17 @@ function App() {
               <div className="success-icon">✅</div>
               <h2>記録完了！</h2>
               <p>お疲れ様でした💪</p>
+              
+              {lastWorkoutSummary && (
+                <div className="share-section">
+                  <div className="summary-preview">
+                    {lastWorkoutSummary.split('\n').map((line, i) => <div key={i}>{line}</div>)}
+                  </div>
+                  <button className="btn-share-main" onClick={handleShare}>成果をSNSでシェアする 📱</button>
+                </div>
+              )}
+              
+              <button className="btn-back-home" onClick={() => { setView('home'); setLastWorkoutSummary(null); }}>ホームに戻る</button>
             </div>
           </div>
         )}
@@ -577,8 +611,12 @@ function App() {
         .last-record-hint { font-size: 0.8rem; color: var(--primary-color); opacity: 0.8; font-weight: 600; }
         
         .view-success { height: 70vh; display: flex; align-items: center; justify-content: center; }
-        .success-card { padding: 48px 32px; text-align: center; display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 300px; border-color: var(--success-color); }
+        .success-card { padding: 40px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; max-width: 300px; border-color: var(--success-color); }
         .success-icon { font-size: 4rem; margin-bottom: 8px; animation: bounce 0.5s ease; }
+        .share-section { width: 100%; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; margin: 10px 0; border: 1px solid var(--glass-border); }
+        .summary-preview { font-size: 0.85rem; color: var(--text-muted); text-align: left; line-height: 1.6; margin-bottom: 16px; white-space: pre-wrap; }
+        .btn-share-main { width: 100%; height: 50px; background: #1DA1F2; color: #fff; border-radius: 10px; font-weight: 700; border: none; }
+        .btn-back-home { background: none; border: none; color: var(--text-muted); font-size: 0.9rem; text-decoration: underline; }
         @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
 
         /* Analysis Styles */
