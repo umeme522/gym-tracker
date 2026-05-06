@@ -37,6 +37,7 @@ const INITIAL_MACHINES = [
   { id: 3, name: 'ショルダープレス', icon: '⬆️', image: shoulderImg, type: 'weight' },
   { id: 4, name: 'レッグプレス', icon: '🦵', image: legImg, type: 'weight' },
   { id: 5, name: 'アダクション', icon: '↔️', image: adductionImg, type: 'weight' },
+  { id: 9, name: 'アブダクション', icon: '↔️', image: adductionImg, type: 'weight' },
   { id: 6, name: 'ディップス', icon: '⬇️', image: dipsImg, type: 'weight' },
   { id: 7, name: 'バイセップスカール', icon: '💪', image: bicepImg, type: 'weight' },
   { id: 8, name: 'トレッドミル', icon: '🏃', image: treadmillImg, type: 'cardio' },
@@ -60,7 +61,19 @@ function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // User is signed in
+        // Session Check: 24h limit
+        const loginTime = localStorage.getItem('gym_login_timestamp');
+        if (loginTime) {
+          const now = Date.now();
+          const dayInMs = 24 * 60 * 60 * 1000;
+          if (now - parseInt(loginTime) > dayInMs) {
+            handleDemoLogout();
+            return;
+          }
+        } else {
+          localStorage.setItem('gym_login_timestamp', Date.now().toString());
+        }
+
         const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
         if (userDoc.exists()) {
           setUser({ ...userDoc.data(), uid: firebaseUser.uid });
@@ -125,14 +138,14 @@ function App() {
 
     try {
       if (type === 'register') {
-        const { confirmPassword, username, height, weight } = profileData;
+        const { confirmPassword, username, height, weight, bodyFat } = profileData;
         if (password !== confirmPassword) {
           setAuthError('パスワードが一致しません。');
           return;
         }
         
         const res = await createUserWithEmailAndPassword(auth, email, password);
-        const userData = { email, username, height, weight, createdAt: new Date().toISOString() };
+        const userData = { email, username, height, weight, bodyFat, createdAt: new Date().toISOString() };
         await setDoc(doc(db, 'users', res.user.uid), userData);
         setUser({ ...userData, uid: res.user.uid });
         
@@ -327,7 +340,6 @@ function App() {
   return (
     <div className="app-container">
       <header className="app-header">
-        <h1>ジムトラッカー</h1>
       </header>
 
       <main className="app-main">
@@ -352,6 +364,11 @@ function App() {
                   <div className="user-stat">
                     <span className="lab">体重</span>
                     <span className="val">{user.weight}<span className="unit">kg</span></span>
+                  </div>
+                  <div className="user-stat-divider"></div>
+                  <div className="user-stat">
+                    <span className="lab">体脂肪</span>
+                    <span className="val">{user.bodyFat || '--'}<span className="unit">%</span></span>
                   </div>
                 </div>
               </div>
@@ -546,7 +563,9 @@ function App() {
       )}
 
       <style jsx>{`
-        .app-container { padding: 16px; flex: 1; display: flex; flex-direction: column; gap: 20px; padding-bottom: 100px; max-width: 600px; margin: 0 auto; box-sizing: border-box; }
+        .app-container { width: 100%; max-width: 700px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; background: var(--bg-dark); position: relative; padding: 16px; box-sizing: border-box; }
+        .view-analysis { width: 100%; padding: 0; }
+        .view-analysis .glass-card { margin-left: -8px; margin-right: -8px; border-radius: 0; border-left: none; border-right: none; }
         .app-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
         .app-header h1 { font-size: 1.4rem; color: var(--primary-color); font-weight: 800; letter-spacing: 1px; margin: 0; }
         .btn-logout { background: none; color: var(--text-muted); font-size: 0.8rem; border: 1px solid var(--glass-border); padding: 4px 12px; border-radius: 6px; }
@@ -556,12 +575,12 @@ function App() {
         .user-main { display: flex; flex-direction: column; }
         .user-main .welcome { font-size: 0.75rem; color: var(--text-muted); }
         .user-main .username { font-weight: 700; font-size: 1.2rem; }
-        .user-stats-row { display: flex; align-items: center; gap: 16px; margin-top: 4px; }
-        .user-stat { display: flex; align-items: baseline; gap: 6px; }
-        .user-stat .lab { font-size: 0.75rem; color: var(--text-muted); }
-        .user-stat .val { font-size: 1.1rem; font-weight: 800; color: var(--primary-color); }
-        .user-stat .unit { font-size: 0.7rem; color: var(--text-muted); margin-left: 2px; }
-        .user-stat-divider { width: 1px; height: 12px; background: rgba(255,255,255,0.1); }
+        .user-stats-row { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+        .user-stat { display: flex; align-items: baseline; gap: 4px; }
+        .user-stat .lab { font-size: 0.7rem; color: var(--text-muted); }
+        .user-stat .val { font-size: 1rem; font-weight: 800; color: var(--primary-color); }
+        .user-stat .unit { font-size: 0.6rem; color: var(--text-muted); margin-left: 1px; }
+        .user-stat-divider { width: 1px; height: 10px; background: rgba(255,255,255,0.1); }
 
         .status-section { padding: 20px; margin-bottom: 8px; }
         .visit-status { display: flex; flex-direction: column; align-items: center; gap: 16px; }
@@ -701,9 +720,15 @@ function AuthView({ view, setView, onAuth, error }) {
                   <label>身長 (cm)</label>
                   <input type="number" value={height} onChange={(e) => setHeight(e.target.value)} />
                 </div>
-                <div className="input-group">
-                  <label>体重 (kg)</label>
-                  <input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} />
+                <div className="form-row" style={{ display: 'flex', gap: '12px' }}>
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label>体重 (kg)</label>
+                    <input type="number" step="0.1" value={weight} onChange={(e) => setWeight(e.target.value)} />
+                  </div>
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label>体脂肪 (%)</label>
+                    <input type="number" step="0.1" value={bodyFat} onChange={(e) => setBodyFat(e.target.value)} />
+                  </div>
                 </div>
               </div>
             </>
