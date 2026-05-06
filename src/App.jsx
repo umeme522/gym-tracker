@@ -506,7 +506,8 @@ function App() {
               ))}
               {(records.length === 0 && visitLog.length === 0) && <p className="empty-msg">記録がありません</p>}
             </div>
-          )}
+          </div>
+        )}
             </React.Fragment>
           )}
       </main>
