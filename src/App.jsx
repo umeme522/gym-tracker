@@ -335,7 +335,7 @@ function App() {
         {!user ? (
           <AuthView view={authView} setView={setAuthView} onAuth={handleAuthAction} error={authError} />
         ) : (
-          <>
+          <React.Fragment>
         {view === 'home' && (
           <div className="view-home animate-fade">
             <div className="user-profile-minimal" onClick={() => setView('edit-profile')}>
@@ -504,10 +504,7 @@ function App() {
                   )}
                 </div>
               ))}
-              {(records.length === 0 && visitLog.length === 0) && <p className="empty-msg">記録がありません</p>}
-            </div>
-          </div>
-            </>
+            </React.Fragment>
           )}
       </main>
 
