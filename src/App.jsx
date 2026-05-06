@@ -343,7 +343,10 @@ function App() {
                 <span className="username">{user.username}様</span>
                 <span className="edit-hint">名前を変更 ✎</span>
               </div>
-              <button className="btn-logout-minimal" onClick={(e) => { e.stopPropagation(); handleDemoLogout(); }}>ログアウト</button>
+              <div className="user-actions-minimal">
+                <button className="btn-inquiry-trigger" onClick={() => setView('inquiry')}>お問い合わせ 💬</button>
+                <button className="btn-logout-minimal" onClick={(e) => { e.stopPropagation(); handleDemoLogout(); }}>ログアウト</button>
+              </div>
             </div>
             
             {currentVisit ? (
@@ -431,6 +434,10 @@ function App() {
 
         {view === 'edit-profile' && (
           <NameEditView user={user} onSave={handleSaveProfile} onBack={() => setView('home')} />
+        )}
+
+        {view === 'inquiry' && (
+          <InquiryView user={user} onBack={() => setView('home')} />
         )}
 
         {view === 'record-success' && (
@@ -551,11 +558,9 @@ function App() {
         input, select, textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.05); color: #fff; font-size: 16px; box-sizing: border-box; }
         input:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 2px rgba(255, 204, 0, 0.2); }
         .glass-card { background: rgba(255, 255, 255, 0.03); border-radius: 16px; border: none; }
-        .user-profile-minimal { padding: 12px 0; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .user-name-row { display: flex; align-items: baseline; gap: 12px; }
-        .username { font-weight: 700; font-size: 1.3rem; color: #fff; }
-        .edit-hint { font-size: 0.8rem; color: var(--primary-color); opacity: 0.8; }
-        .btn-logout-minimal { background: none; border: none; color: var(--text-muted); font-size: 0.75rem; padding: 8px; }
+        .user-actions-minimal { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .btn-inquiry-trigger { background: none; border: none; color: var(--primary-color); font-size: 0.75rem; opacity: 0.8; padding: 4px 8px; }
+        .btn-logout-minimal { background: none; border: none; color: var(--text-muted); font-size: 0.75rem; padding: 4px 8px; }
         
         .action-section { display: none; }
         .btn-in-wide { width: 100%; height: 80px; background: var(--primary-color); color: #000; border-radius: 12px; font-weight: 800; font-size: 1.5rem; border: none; margin: 12px 0; }
@@ -789,6 +794,71 @@ function WeightForm({ onSubmit, initialData }) {
         {initialData ? '更新を保存する' : '記録を保存する'}
       </button>
       <style jsx>{`.full-width { width: 100%; margin-top: 12px; height: 56px; font-size: 1.1rem; }.form-content { display: flex; flex-direction: column; gap: 24px; }`}</style>
+    </div>
+  );
+}
+
+function InquiryView({ user, onBack }) {
+  const [category, setCategory] = useState('要望');
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const handleSend = async () => {
+    if (!message.trim()) return;
+    setSending(true);
+
+    try {
+      await emailjs.send(
+        'service_ozlah6b', 
+        'template_sgyc1qp', 
+        { 
+          to_email: 'cotto7894@icloud.com', // Admin email
+          username: user.username,
+          category: category,
+          message: message,
+          user_email: user.email
+        }, 
+        'j1bMToGV2qz1hk2DN'
+      );
+      alert('送信しました。フィードバックありがとうございます！');
+      onBack();
+    } catch (err) {
+      console.error(err);
+      alert('送信に失敗しました。');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="view-record animate-fade">
+      <button className="btn-back" onClick={onBack}>← 戻る</button>
+      <div className="glass-card record-form">
+        <h2>お問い合わせ</h2>
+        <div className="auth-form" style={{ width: '100%' }}>
+          <div className="input-group">
+            <label>種別</label>
+            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+              <option value="要望">要望 💡</option>
+              <option value="エラー">エラー ⚠️</option>
+              <option value="その他">その他 ✉️</option>
+            </select>
+          </div>
+          <div className="input-group">
+            <label>内容</label>
+            <textarea 
+              rows="5" 
+              value={message} 
+              onChange={(e) => setMessage(e.target.value)} 
+              placeholder="こちらに入力してください..."
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', padding: '12px', borderRadius: '12px', color: '#fff', fontSize: '16px' }}
+            />
+          </div>
+          <button className="btn-primary" onClick={handleSend} disabled={sending} style={{ width: '100%', marginTop: '16px' }}>
+            {sending ? '送信中...' : '送信する'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
