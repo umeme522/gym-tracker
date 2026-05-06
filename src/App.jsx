@@ -558,10 +558,8 @@ function App() {
       )}
 
       <style jsx>{`
-        .app-container { width: 100%; max-width: 700px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; background: var(--bg-dark); position: relative; padding: 16px; box-sizing: border-box; }
-        .view-analysis { width: 100%; padding: 0; }
-        .view-analysis .glass-card { margin-left: -8px; margin-right: -8px; border-radius: 0; border-left: none; border-right: none; }
-        .app-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
+        .app-container { width: 100%; max-width: 500px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; background: var(--bg-dark); position: relative; padding: 16px; padding-bottom: calc(80px + env(safe-area-inset-bottom)); padding-top: env(safe-area-inset-top); box-sizing: border-box; }
+        .app-main { flex: 1; display: flex; flex-direction: column; gap: 12px; }
         .app-header h1 { font-size: 1.4rem; color: var(--primary-color); font-weight: 800; letter-spacing: 1px; margin: 0; }
         .btn-logout { background: none; color: var(--text-muted); font-size: 0.8rem; border: 1px solid var(--glass-border); padding: 4px 12px; border-radius: 6px; }
 
@@ -587,10 +585,9 @@ function App() {
         .visit-info { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
         .info-row { display: flex; justify-content: space-between; width: 100%; max-width: 200px; align-items: center; }
         .visit-info .label { font-size: 0.8rem; color: var(--text-muted); }
-        .visit-info .value { font-size: 1.5rem; font-weight: 700; color: var(--primary-color); }
-        .visit-info .value-sub { font-size: 1.1rem; font-weight: 600; color: var(--text-main); }
-
-        .btn-in, .btn-out { width: 100%; height: 56px; border-radius: 12px; font-weight: 700; font-size: 1.1rem; }
+        input, select, textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.05); color: #fff; font-size: 16px; box-sizing: border-box; }
+        input:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 2px rgba(255, 204, 0, 0.2); }
+        .btn-primary, .btn-secondary, .btn-in, .btn-out, .btn-finish, .btn-save { height: 48px; display: flex; align-items: center; justify-content: center; font-weight: 700; border-radius: 12px; font-size: 1rem; }
         .btn-in { background: var(--primary-color); color: #000; }
         .btn-out { background: rgba(255, 107, 107, 0.1); color: var(--danger-color); border: 1px solid var(--danger-color); }
 
@@ -731,6 +728,8 @@ function AuthView({ view, setView, onAuth, error }) {
           )}
           <div className="input-group">
             <label>メールアドレス (ID)</label>
+            <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=0" />
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="example@mail.com" />
           </div>
           <div className="input-group">
