@@ -341,13 +341,14 @@ function App() {
           <div className="view-home animate-fade">
             <div className="user-profile-header glass-card" onClick={() => setView('edit-profile')}>
               <div className="user-info">
-                <div className="user-main">
+                <div className="user-header-main">
                   <div className="user-name-row">
                     <span className="username">{user.username}様</span>
                     <span className="edit-hint">✎ 編集</span>
                   </div>
-                  <span className="welcome">トレーニングお疲れ様です</span>
+                  <button className="btn-logout-top" onClick={(e) => { e.stopPropagation(); handleDemoLogout(); }}>ログアウト</button>
                 </div>
+                
                 <div className="user-stats-row">
                   <div className="user-stat">
                     <span className="lab">身長</span>
@@ -365,7 +366,6 @@ function App() {
                   </div>
                 </div>
               </div>
-              <button className="btn-logout" onClick={(e) => { e.stopPropagation(); handleDemoLogout(); }}>ログアウト</button>
             </div>
             <section className="status-section glass-card">
               <div className="visit-status">
@@ -565,15 +565,14 @@ function App() {
         .app-header h1 { font-size: 1.4rem; color: var(--primary-color); font-weight: 800; letter-spacing: 1px; margin: 0; }
         .btn-logout { background: none; color: var(--text-muted); font-size: 0.8rem; border: 1px solid var(--glass-border); padding: 4px 12px; border-radius: 6px; }
 
-        .user-profile-header { padding: 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 12px; border-radius: 16px; border-left: 4px solid var(--primary-color); cursor: pointer; transition: background 0.2s; }
         .user-profile-header:hover { background: rgba(255,255,255,0.05); }
-        .user-info { display: flex; flex-direction: column; gap: 8px; flex: 1; }
-        .user-main { display: flex; flex-direction: column; }
+        .user-info { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+        .user-header-main { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
         .user-name-row { display: flex; align-items: baseline; gap: 8px; }
-        .user-main .welcome { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
         .user-main .username { font-weight: 700; font-size: 1.2rem; }
         .user-main .edit-hint { font-size: 0.7rem; color: var(--primary-color); opacity: 0.8; font-weight: 600; }
-        .user-stats-row { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+        .btn-logout-top { background: none; color: var(--text-muted); font-size: 0.7rem; border: 1px solid var(--glass-border); padding: 4px 10px; border-radius: 6px; }
+        .user-stats-row { display: flex; align-items: center; gap: 12px; }
         .user-stat { display: flex; align-items: baseline; gap: 4px; }
         .user-stat .lab { font-size: 0.7rem; color: var(--text-muted); }
         .user-stat .val { font-size: 1rem; font-weight: 800; color: var(--primary-color); }
