@@ -750,7 +750,7 @@ function AuthView({ view, setView, onAuth, error }) {
               <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="再度入力してください" />
             </div>
           )}
-          <button className="btn-primary" onClick={() => onAuth({ email, password, confirmPassword, username, height, weight }, view)}>
+          <button className="btn-primary" onClick={() => onAuth({ email, password, confirmPassword, username, height, weight, bodyFat }, view)}>
             {view === 'login' ? 'ログインする' : '登録する'}
           </button>
           <button className="btn-switch" onClick={() => { setView(view === 'login' ? 'register' : 'login'); }}>
@@ -1037,8 +1037,8 @@ function TrendChart({ data, label, color = '#ffcc00' }) {
           <g key={i} className="chart-point-group">
             <circle cx={p.x} cy={p.y} r="3" fill="#fff" stroke={color} strokeWidth="1.5" />
             {(i === points.length - 1 || p.val === Math.max(...vals) || p.val === Math.min(...vals)) && (
-              <text x={p.x} y={p.y - 8} textAnchor="middle" fontSize="9" fill="#fff" fontWeight="700">
-                {p.val}
+              <text x={p.x} y={p.y - 10} textAnchor="middle" fontSize="10" fill="#fff" fontWeight="800">
+                {p.val.toFixed(1)}
               </text>
             )}
           </g>
