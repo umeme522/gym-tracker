@@ -435,7 +435,7 @@ function App() {
         )}
 
         {view === 'analysis' && (
-          <AnalysisView records={records} visitLog={visitLog} user={user} />
+          <AnalysisView records={records} visitLog={visitLog} user={user} onUserUpdate={(updated) => setUser(updated)} />
         )}
 
         {view === 'record-edit' && selectedMachine && editingRecord && (
@@ -901,7 +901,7 @@ function InquiryView({ user, onBack }) {
   );
 }
 
-function AnalysisView({ visitLog, user, records }) {
+function AnalysisView({ records, visitLog, user, onUserUpdate }) {
   const currentYear = new Date().getFullYear();
   const [wIn, setWIn] = useState(user.weight || '');
   const [fIn, setFIn] = useState(user.bodyFat || '');
@@ -911,8 +911,8 @@ function AnalysisView({ visitLog, user, records }) {
     try {
       const updatedUser = { ...user, weight: wIn, bodyFat: fIn };
       await setDoc(doc(db, 'users', user.uid), updatedUser);
-      alert('本日の体重を記録しました');
-      window.location.reload(); 
+      onUserUpdate(updatedUser);
+      alert('記録を保存しました');
     } catch (err) { console.error(err); }
   };
 
