@@ -968,37 +968,87 @@ function AnalysisView({ records, visitLog, user, onUserUpdate }) {
 
       <div className="glass-card chart-container">
         <h3>体重推移 (最新10件)</h3>
-        <div className="line-chart-container">
-          <div className="line-chart">
-            {weightData.map((d, i) => {
-              const x = (i / (weightData.length - 1)) * 100;
-              const y = ((parseFloat(d.currentWeight) - minW) / (maxW - minW)) * 100;
-              return (
-                <div key={i} className="line-point" style={{ left: `${x}%`, bottom: `${y}%` }}>
-                  <div className="point-val">{d.currentWeight}kg</div>
-                  <div className="point-dot"></div>
-                </div>
-              );
-            })}
-            {weightData.length < 2 && <p className="empty-msg">体重の記録が不足しています</p>}
-          </div>
-        </div>
+        <TrendChart 
+          data={weightData.map(d => ({ val: parseFloat(d.currentWeight), date: d.date }))} 
+          label="体重 (kg)" 
+          color="#00f2fe" 
+        />
       </div>
 
       <style jsx>{`
-        .chart-container { padding: 16px 8px; margin-bottom: 12px; }
-        .bar-chart { display: flex; justify-content: space-around; align-items: flex-end; height: 120px; margin-top: 16px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .chart-container { padding: 16px; margin-bottom: 12px; }
+        .bar-chart { display: flex; justify-content: space-around; align-items: flex-end; height: 120px; margin-top: 16px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .bar-column { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 4px; height: 100%; min-width: 15px; }
-        .bar-wrapper { width: 10px; height: 100%; display: flex; align-items: flex-end; background: rgba(255,255,255,0.02); border-radius: 2px; }
-        .bar { width: 100%; background: var(--primary-color); border-radius: 2px 2px 0 0; transition: height 0.6s ease-out; }
-        .bar-val { font-size: 0.55rem; font-weight: 800; color: var(--primary-color); }
-        .bar-label { font-size: 0.55rem; color: var(--text-muted); }
-
-        .line-chart-container { height: 150px; margin-top: 24px; position: relative; padding: 0 20px; }
-        .line-chart { width: 100%; height: 100%; position: relative; border-bottom: 1px solid rgba(255,255,255,0.1); border-left: 1px solid rgba(255,255,255,0.1); }
-        .line-point { position: absolute; transform: translate(-50%, 50%); }
-        .point-dot { width: 8px; height: 8px; background: var(--primary-color); border-radius: 50%; box-shadow: 0 0 10px var(--primary-color); }
+        .bar-wrapper { width: 8px; height: 100%; display: flex; align-items: flex-end; background: rgba(255,255,255,0.02); border-radius: 4px; }
+        .bar { width: 100%; background: var(--primary-color); border-radius: 4px 4px 0 0; transition: height 0.6s ease-out; }
+        .bar-val { font-size: 0.6rem; font-weight: 800; color: var(--primary-color); }
+        .bar-label { font-size: 0.6rem; color: var(--text-muted); }
         .point-val { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 0.65rem; color: #fff; white-space: nowrap; font-weight: 700; }
+      `}</style>
+    </div>
+  );
+}
+
+function TrendChart({ data, label, color = '#ffcc00' }) {
+  if (!data || data.length < 2) return <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>体重の記録が不足しています（2件以上必要）</p>;
+  
+  const width = 300;
+  const height = 120;
+  const padding = 20;
+  const vals = data.map(d => d.val);
+  const min = Math.min(...vals) * 0.98;
+  const max = Math.max(...vals) * 1.02;
+  const range = max - min || 1;
+
+  const points = data.map((d, i) => ({
+    x: padding + (i * (width - padding * 2)) / (data.length - 1),
+    y: height - padding - ((d.val - min) * (height - padding * 2)) / range,
+    val: d.val
+  }));
+
+  let pathD = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const cp1x = (points[i].x + points[i + 1].x) / 2;
+    pathD += ` C ${cp1x} ${points[i].y}, ${cp1x} ${points[i + 1].y}, ${points[i + 1].x} ${points[i + 1].y}`;
+  }
+
+  const areaD = `${pathD} L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`;
+
+  return (
+    <div className="trend-container">
+      <div className="trend-header">
+        <span className="trend-label">{label}</span>
+        <div className="trend-stats">
+          <span className="min-val">min: {Math.min(...vals).toFixed(1)}</span>
+          <span className="max-val">max: {Math.max(...vals).toFixed(1)}</span>
+        </div>
+      </div>
+      <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" style={{ overflow: 'visible' }}>
+        <defs>
+          <linearGradient id={`grad-${label}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+            <stop offset="100%" stopColor={color} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="rgba(255,255,255,0.05)" />
+        <path d={areaD} fill={`url(#grad-${label})`} />
+        <path d={pathD} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        {points.map((p, i) => (
+          <g key={i} className="chart-point-group">
+            <circle cx={p.x} cy={p.y} r="3" fill="#fff" stroke={color} strokeWidth="1.5" />
+            {(i === points.length - 1 || p.val === Math.max(...vals) || p.val === Math.min(...vals)) && (
+              <text x={p.x} y={p.y - 8} textAnchor="middle" fontSize="9" fill="#fff" fontWeight="700">
+                {p.val}
+              </text>
+            )}
+          </g>
+        ))}
+      </svg>
+      <style jsx>{`
+        .trend-container { margin-top: 10px; margin-bottom: 20px; }
+        .trend-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .trend-label { font-size: 0.8rem; font-weight: 700; color: rgba(255,255,255,0.5); }
+        .trend-stats { display: flex; gap: 8px; font-size: 0.7rem; color: var(--text-muted); }
       `}</style>
     </div>
   );
