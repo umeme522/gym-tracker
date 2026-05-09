@@ -53,18 +53,7 @@ function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Session Check: 24h limit
-        const loginTime = localStorage.getItem('gym_login_timestamp');
-        if (loginTime) {
-          const now = Date.now();
-          const dayInMs = 24 * 60 * 60 * 1000;
-          if (now - parseInt(loginTime) > dayInMs) {
-            handleDemoLogout();
-            return;
-          }
-        } else {
-          localStorage.setItem('gym_login_timestamp', Date.now().toString());
-        }
+
 
         const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
         if (userDoc.exists()) {
