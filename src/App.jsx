@@ -123,7 +123,9 @@ function App() {
   };
 
   // Firebase Auth Action
+  const [authLoading, setAuthLoading] = useState(false);
   const handleAuthAction = async (profileData, type) => {
+    setAuthLoading(true);
     setAuthError('');
     const { email, password } = profileData;
 
@@ -132,6 +134,7 @@ function App() {
         const { confirmPassword, username, height, weight, bodyFat } = profileData;
         if (password !== confirmPassword) {
           setAuthError('パスワードが一致しません。');
+          setAuthLoading(false);
           return;
         }
         
@@ -166,8 +169,10 @@ function App() {
       if (err.code === 'auth/email-already-in-use') setAuthError('このメールアドレスは既に登録されています。');
       else if (err.code === 'auth/invalid-email') setAuthError('メールアドレスの形式が正しくありません。');
       else if (err.code === 'auth/weak-password') setAuthError('パスワードは6文字以上で入力してください。');
-      else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') setAuthError('メールアドレスまたはパスワードが正しくありません。');
+      else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') setAuthError('メールアドレスまたはパスワードが正しくありません。');
       else setAuthError(`認証エラー: ${err.message}`);
+    } finally {
+      setAuthLoading(false);
     }
   };
 
@@ -357,7 +362,7 @@ function App() {
 
       <main className="app-main">
         {!user ? (
-          <AuthView view={authView} setView={setAuthView} onAuth={handleAuthAction} error={authError} />
+          <AuthView view={authView} setView={setAuthView} onAuth={handleAuthAction} error={authError} loading={authLoading} />
         ) : (
           <React.Fragment>
         {view === 'home' && (
@@ -693,7 +698,7 @@ function DurationCounter({ startTime }) {
   return <span className="value">{elapsed}</span>;
 }
 
-function AuthView({ view, setView, onAuth, error }) {
+function AuthView({ view, setView, onAuth, error, loading }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -701,6 +706,7 @@ function AuthView({ view, setView, onAuth, error }) {
   const [height, setHeight] = useState('170');
   const [weight, setWeight] = useState('65');
   const [bodyFat, setBodyFat] = useState('20');
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <div className="auth-view animate-fade">
@@ -741,7 +747,21 @@ function AuthView({ view, setView, onAuth, error }) {
           </div>
           <div className="input-group">
             <label>パスワード</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+            <div className="password-input-wrapper">
+              <input 
+                type={showPassword ? 'text' : 'password'} 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                placeholder="••••••••" 
+              />
+              <button 
+                type="button" 
+                className="btn-toggle-password" 
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? '🔒' : '👁️'}
+              </button>
+            </div>
           </div>
           {view === 'register' && (
             <div className="input-group">
@@ -750,7 +770,8 @@ function AuthView({ view, setView, onAuth, error }) {
             </div>
           )}
           <button 
-            className="btn-primary" 
+            className={`btn-primary ${loading ? 'btn-loading' : ''}`} 
+            disabled={loading}
             onClick={() => {
               const payload = view === 'login' 
                 ? { email, password } 
@@ -758,7 +779,7 @@ function AuthView({ view, setView, onAuth, error }) {
               onAuth(payload, view);
             }}
           >
-            {view === 'login' ? 'ログインする' : '登録する'}
+            {loading ? '通信中...' : (view === 'login' ? 'ログインする' : '登録する')}
           </button>
           <button className="btn-switch" onClick={() => { setView(view === 'login' ? 'register' : 'login'); }}>
             {view === 'login' ? 'アカウントをお持ちでない方はこちら' : 'ログインはこちら'}
@@ -774,8 +795,14 @@ function AuthView({ view, setView, onAuth, error }) {
         .input-group { display: flex; flex-direction: column; gap: 6px; text-align: left; width: 100%; }
         .input-group label { font-size: 0.8rem; color: var(--text-muted); padding-left: 4px; }
         .input-group input { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); padding: 12px; border-radius: 10px; color: #fff; font-size: 1rem; width: 100%; box-sizing: border-box; }
+        
+        .password-input-wrapper { position: relative; width: 100%; }
+        .password-input-wrapper input { padding-right: 48px; }
+        .btn-toggle-password { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.6; }
+        
         .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; box-sizing: border-box; }
-        .btn-primary { height: 56px; border-radius: 12px; font-weight: 700; margin-top: 8px; width: 100%; }
+        .btn-primary { height: 56px; border-radius: 12px; font-weight: 700; margin-top: 8px; width: 100%; transition: all 0.2s; }
+        .btn-loading { opacity: 0.7; cursor: not-allowed; }
         .btn-switch { background: none; color: var(--primary-color); font-size: 0.85rem; margin-top: 10px; }
       `}</style>
     </div>
