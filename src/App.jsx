@@ -606,10 +606,10 @@ function App() {
         .btn-in-wide { width: 100%; height: 80px; background: var(--primary-color); color: #000; border-radius: 12px; font-weight: 800; font-size: 1.5rem; border: none; margin: 12px 0; }
         .btn-out-wide { width: 100%; height: 80px; background: #333; color: #fff; border-radius: 12px; font-weight: 700; font-size: 1.3rem; border: none; margin: 12px 0; }
         
-        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        .machine-card { background: rgba(255,255,255,0.03); border-radius: 16px; border: none; padding: 24px 12px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-        .machine-emoji-container { font-size: 3rem; }
-        .machine-name { font-size: 0.9rem; font-weight: 600; color: #fff; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .machine-card { background: rgba(255,255,255,0.03); border-radius: 16px; border: none; padding: 16px 8px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .machine-emoji-container { font-size: 2.2rem; }
+        .machine-name { font-size: 0.75rem; font-weight: 600; color: #fff; text-align: center; line-height: 1.2; }
 
         .btn-back { background: none; color: var(--text-muted); margin-bottom: 12px; font-size: 0.9rem; padding: 8px 0; }
         .record-form { padding: 24px 16px; display: flex; flex-direction: column; gap: 20px; border-radius: 16px; }
