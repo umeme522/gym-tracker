@@ -737,8 +737,6 @@ function AuthView({ view, setView, onAuth, error }) {
           )}
           <div className="input-group">
             <label>メールアドレス (ID)</label>
-            <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=0" />
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="example@mail.com" />
           </div>
           <div className="input-group">
