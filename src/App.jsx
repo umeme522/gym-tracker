@@ -319,10 +319,11 @@ function App() {
     try {
       await addDoc(collection(db, 'users', user.uid, 'visitLogs'), newVisitLog);
       
-      // シェア用テキストの生成
+      // 動的にベースURLを取得
+      const baseUrl = window.location.origin + window.location.pathname;
       const dateStr = new Date().toLocaleDateString('ja-JP', {month:'short', day:'numeric'});
       const machineNames = [...new Set(tempVisitRecords.map(r => r.machineName))].join('、');
-      const shareText = `【本日のワークアウト】\n📅 ${dateStr}\n⏱️ 滞在: ${duration}分\n💪 実施: ${machineNames}\n\n#GymTracker で記録完了！\nhttps://umeme522.github.io/gym-tracker/`;
+      const shareText = `【本日のワークアウト】\n📅 ${dateStr}\n⏱️ 滞在: ${duration}分\n💪 実施: ${machineNames}\n\n#GymTracker で記録完了！\n${baseUrl}`;
       setLastWorkoutSummary(shareText);
 
       setCurrentVisit(null);
