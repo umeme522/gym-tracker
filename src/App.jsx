@@ -718,6 +718,14 @@ function AuthView({ view, setView, onAuth, error, loading }) {
   const [bodyFat, setBodyFat] = useState('20');
   const [showPassword, setShowPassword] = useState(false);
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const payload = view === 'login' 
+      ? { email, password } 
+      : { email, password, confirmPassword, username, height, weight, bodyFat };
+    onAuth(payload, view);
+  };
+
   return (
     <div className="auth-view animate-fade">
       <div className="glass-card auth-card">
@@ -726,12 +734,12 @@ function AuthView({ view, setView, onAuth, error, loading }) {
           {view === 'login' ? 'メールアドレスとパスワードでログイン' : 'IDはメールアドレスになります。'}
         </div>
         {error && <div className="auth-error">{error}</div>}
-        <div className="auth-form">
+        <form className="auth-form" onSubmit={handleSubmit}>
           {view === 'register' && (
             <>
               <div className="input-group">
                 <label>ユーザー名</label>
-                <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="ニックネーム" />
+                <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="ニックネーム" autoComplete="username" />
               </div>
               <div className="row">
                 <div className="input-group">
@@ -753,7 +761,7 @@ function AuthView({ view, setView, onAuth, error, loading }) {
           )}
           <div className="input-group">
             <label>メールアドレス (ID)</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="example@mail.com" />
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="example@mail.com" autoComplete="email" />
           </div>
           <div className="input-group">
             <label>パスワード</label>
@@ -763,6 +771,7 @@ function AuthView({ view, setView, onAuth, error, loading }) {
                 value={password} 
                 onChange={(e) => setPassword(e.target.value)} 
                 placeholder="••••••••" 
+                autoComplete={view === 'login' ? "current-password" : "new-password"}
               />
               <button 
                 type="button" 
@@ -776,25 +785,20 @@ function AuthView({ view, setView, onAuth, error, loading }) {
           {view === 'register' && (
             <div className="input-group">
               <label>パスワード (確認用)</label>
-              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="再度入力してください" />
+              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="再度入力してください" autoComplete="new-password" />
             </div>
           )}
           <button 
+            type="submit"
             className={`btn-primary ${loading ? 'btn-loading' : ''}`} 
             disabled={loading}
-            onClick={() => {
-              const payload = view === 'login' 
-                ? { email, password } 
-                : { email, password, confirmPassword, username, height, weight, bodyFat };
-              onAuth(payload, view);
-            }}
           >
             {loading ? '通信中...' : (view === 'login' ? 'ログインする' : '登録する')}
           </button>
-          <button className="btn-switch" onClick={() => { setView(view === 'login' ? 'register' : 'login'); }}>
+          <button type="button" className="btn-switch" onClick={() => { setView(view === 'login' ? 'register' : 'login'); }}>
             {view === 'login' ? 'アカウントをお持ちでない方はこちら' : 'ログインはこちら'}
           </button>
-        </div>
+        </form>
       </div>
       <style jsx>{`
         .auth-view { min-height: 90vh; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
