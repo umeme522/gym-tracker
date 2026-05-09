@@ -18,7 +18,8 @@ import {
   orderBy,
   addDoc,
   updateDoc,
-  deleteDoc
+  deleteDoc,
+  limit
 } from 'firebase/firestore';
 
 const INITIAL_MACHINES = [
@@ -89,14 +90,22 @@ function App() {
       return;
     }
 
-    // Individual Records (not in visits)
-    const qRecords = query(collection(db, 'users', user.uid, 'records'), orderBy('timestamp', 'desc'));
+    // Individual Records (Limit to last 50 for performance)
+    const qRecords = query(
+      collection(db, 'users', user.uid, 'records'), 
+      orderBy('timestamp', 'desc'),
+      limit(50)
+    );
     const unsubRecords = onSnapshot(qRecords, (snapshot) => {
       setRecords(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
     });
 
-    // Visit Summaries
-    const qVisits = query(collection(db, 'users', user.uid, 'visitLogs'), orderBy('timestamp', 'desc'));
+    // Visit Summaries (Limit to last 20 for performance)
+    const qVisits = query(
+      collection(db, 'users', user.uid, 'visitLogs'), 
+      orderBy('timestamp', 'desc'),
+      limit(20)
+    );
     const unsubVisits = onSnapshot(qVisits, (snapshot) => {
       setVisitLog(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
     });
