@@ -749,7 +749,15 @@ function AuthView({ view, setView, onAuth, error }) {
               <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="再度入力してください" />
             </div>
           )}
-          <button className="btn-primary" onClick={() => onAuth({ email, password, confirmPassword, username, height, weight, bodyFat }, view)}>
+          <button 
+            className="btn-primary" 
+            onClick={() => {
+              const payload = view === 'login' 
+                ? { email, password } 
+                : { email, password, confirmPassword, username, height, weight, bodyFat };
+              onAuth(payload, view);
+            }}
+          >
             {view === 'login' ? 'ログインする' : '登録する'}
           </button>
           <button className="btn-switch" onClick={() => { setView(view === 'login' ? 'register' : 'login'); }}>
