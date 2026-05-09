@@ -127,7 +127,8 @@ function App() {
   const handleAuthAction = async (profileData, type) => {
     setAuthLoading(true);
     setAuthError('');
-    const { email, password } = profileData;
+    const email = profileData.email.toLowerCase().trim();
+    const { password } = profileData;
 
     try {
       if (type === 'register') {
