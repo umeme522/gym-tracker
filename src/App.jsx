@@ -22,6 +22,14 @@ import {
   limit
 } from 'firebase/firestore';
 
+// Components
+import AuthView from './components/Auth/AuthView';
+import AnalysisView from './components/Analysis/AnalysisView';
+import InquiryView from './components/Support/InquiryView';
+import NameEditView from './components/Profile/NameEditView';
+import WeightForm from './components/Training/WeightForm';
+import CardioForm from './components/Training/CardioForm';
+
 const INITIAL_MACHINES = [
   { id: 1, name: 'ラットプルダウン', icon: '🦅', type: 'weight' },
   { id: 2, name: 'チェストプレス', icon: '🥊', type: 'weight' },
@@ -417,9 +425,8 @@ function App() {
                 <h2>{selectedMachine.name}</h2>
                 <div className="last-record-hint">
                   前回データ: {getLastRecord(selectedMachine.id) ? (
-                    selectedMachine.type === 'cardio' 
                       ? `${getLastRecord(selectedMachine.id).speed}km/h - ${getLastRecord(selectedMachine.id).time}分`
-                      : `${getLastRecord(selectedMachine.id).weight}kg - ${getLastRecord(selectedMachine.id).reps}回`
+                      : `${getLastRecord(selectedMachine.id).weight}kg - ${getLastRecord(selectedMachine.id).reps}回 × ${getLastRecord(selectedMachine.id).sets || 3}セット`
                   ) : 'なし'}
                 </div>
               </div>
@@ -514,7 +521,7 @@ function App() {
                           <div key={rec.id} className="visit-rec-row-simple">
                             <span className="rec-name-simple">{rec.machineName}</span>
                             <span className="rec-val-simple">
-                              {rec.weight !== undefined ? `${rec.weight}kg / ${rec.reps}回` : `${rec.speed}km/h / ${rec.time}分`}
+                              {rec.weight !== undefined ? `${rec.weight}kg / ${rec.reps}回 × ${rec.sets || 3}set` : `${rec.speed}km/h / ${rec.time}分`}
                             </span>
                             <button className="btn-rec-edit" onClick={() => handleEditRecord(rec, item.id)}>✎</button>
                           </div>
@@ -537,7 +544,7 @@ function App() {
                         {item.weight !== undefined ? (
                           <React.Fragment>
                             <span className="item-weight">{item.weight} kg</span>
-                            <span className="item-reps">{item.reps} 回</span>
+                            <span className="item-reps">{item.reps} 回 × {item.sets || 3}set</span>
                           </React.Fragment>
                         ) : (
                           <React.Fragment>
@@ -650,479 +657,17 @@ function App() {
         .rec-val-simple { color: var(--text-main); font-weight: 600; margin-right: 12px; }
         .btn-rec-edit { background: none; color: var(--primary-color); font-size: 0.8rem; opacity: 0.7; }
 
-        .item-info { display: flex; flex-direction: column; gap: 4px; flex: 1; }
-        .item-header-row { display: flex; justify-content: space-between; align-items: flex-start; }
-        .item-actions { display: flex; gap: 8px; }
-        .btn-icon-edit, .btn-icon-delete { background: none; font-size: 1rem; padding: 4px 8px; border-radius: 6px; border: 1px solid transparent; }
-        .btn-icon-edit { color: var(--primary-color); }
-        .btn-icon-delete { color: var(--danger-color); }
-        .btn-icon-edit:active, .btn-icon-delete:active { background: rgba(255, 255, 255, 0.05); }
         .item-name { font-weight: 600; }
         .item-date { font-size: 0.8rem; color: var(--text-muted); }
         .item-data { display: flex; gap: 12px; font-weight: 700; color: var(--primary-color); min-width: 100px; justify-content: flex-end; }
         .visit-duration { color: var(--accent-color); }
 
         .app-nav { position: fixed; bottom: 20px; left: 20px; right: 20px; height: 64px; display: flex; justify-content: space-around; align-items: center; padding: 0 12px; z-index: 100; }
-        .app-nav button { background: none; color: var(--text-muted); font-weight: 600; font-size: 0.9rem; padding: 8px 16px; border-radius: 8px; }
+        .app-nav button { background: none; color: var(--text-muted); font-weight: 600; font-size: 0.9rem; padding: 8px 16px; border-radius: 8px; border: none; }
         .app-nav button.active { color: var(--primary-color); font-weight: 700; background: rgba(255, 204, 0, 0.05); }
 
         .loading-screen { height: 100vh; display: flex; align-items: center; justify-content: center; color: var(--primary-color); font-weight: 700; font-size: 1.2rem; }
         .empty-msg { text-align: center; color: var(--text-muted); margin-top: 40px; }
-      `}</style>
-    </div>
-  );
-}
-
-function DurationCounter({ startTime }) {
-  const [elapsed, setElapsed] = useState('');
-
-  React.useEffect(() => {
-    const update = () => {
-      const diff = new Date() - new Date(startTime);
-      const hours = Math.floor(diff / 3600000);
-      const mins = Math.floor((diff % 3600000) / 60000);
-      const secs = Math.floor((diff % 60000) / 1000);
-      
-      let str = '';
-      if (hours > 0) str += `${hours}:`;
-      str += `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-      setElapsed(str);
-    };
-
-    update();
-    const timer = setInterval(update, 1000);
-    return () => clearInterval(timer);
-  }, [startTime]);
-
-  return <span className="value">{elapsed}</span>;
-}
-
-function AuthView({ view, setView, onAuth, error, loading }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [username, setUsername] = useState('');
-  const [height, setHeight] = useState('170');
-  const [weight, setWeight] = useState('65');
-  const [bodyFat, setBodyFat] = useState('20');
-  const [showPassword, setShowPassword] = useState(false);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const payload = view === 'login' 
-      ? { email, password } 
-      : { email, password, confirmPassword, username, height, weight, bodyFat };
-    onAuth(payload, view);
-  };
-
-  return (
-    <div className="auth-view animate-fade">
-      <div className="glass-card auth-card">
-        <h2>{view === 'login' ? 'ログイン' : '新規会員登録'}</h2>
-        <div className="auth-desc">
-          {view === 'login' ? 'メールアドレスとパスワードでログイン' : 'IDはメールアドレスになります。'}
-        </div>
-        {error && <div className="auth-error">{error}</div>}
-        <form className="auth-form" onSubmit={handleSubmit}>
-          {view === 'register' && (
-            <>
-              <div className="input-group">
-                <label>ユーザー名</label>
-                <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="ニックネーム" autoComplete="username" />
-              </div>
-              <div className="row">
-                <div className="input-group">
-                  <label>身長 (cm)</label>
-                  <input type="number" value={height} onChange={(e) => setHeight(e.target.value)} />
-                </div>
-                <div className="form-row" style={{ display: 'flex', gap: '12px' }}>
-                  <div className="form-group" style={{ flex: 1 }}>
-                    <label>体重 (kg)</label>
-                    <input type="number" step="0.1" value={weight} onChange={(e) => setWeight(e.target.value)} />
-                  </div>
-                  <div className="form-group" style={{ flex: 1 }}>
-                    <label>体脂肪 (%)</label>
-                    <input type="number" step="0.1" value={bodyFat} onChange={(e) => setBodyFat(e.target.value)} />
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-          <div className="input-group">
-            <label>メールアドレス (ID)</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="example@mail.com" autoComplete="email" />
-          </div>
-          <div className="input-group">
-            <label>パスワード</label>
-            <div className="password-input-wrapper">
-              <input 
-                type={showPassword ? 'text' : 'password'} 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
-                placeholder="••••••••" 
-                autoComplete={view === 'login' ? "current-password" : "new-password"}
-              />
-              <button 
-                type="button" 
-                className="btn-toggle-password" 
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? '🔒' : '👁️'}
-              </button>
-            </div>
-          </div>
-          {view === 'register' && (
-            <div className="input-group">
-              <label>パスワード (確認用)</label>
-              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="再度入力してください" autoComplete="new-password" />
-            </div>
-          )}
-          <button 
-            type="submit"
-            className={`btn-primary ${loading ? 'btn-loading' : ''}`} 
-            disabled={loading}
-          >
-            {loading ? '通信中...' : (view === 'login' ? 'ログインする' : '登録する')}
-          </button>
-          <button type="button" className="btn-switch" onClick={() => { setView(view === 'login' ? 'register' : 'login'); }}>
-            {view === 'login' ? 'アカウントをお持ちでない方はこちら' : 'ログインはこちら'}
-          </button>
-        </form>
-      </div>
-      <style jsx>{`
-        .auth-view { min-height: 90vh; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
-        .auth-card { padding: 32px 20px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 20px; text-align: center; box-sizing: border-box; }
-        .auth-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; }
-        .auth-error { background: rgba(255, 107, 107, 0.1); color: var(--danger-color); padding: 12px; border-radius: 8px; font-size: 0.85rem; border: 1px solid var(--danger-color); }
-        .auth-form { display: flex; flex-direction: column; gap: 16px; width: 100%; }
-        .input-group { display: flex; flex-direction: column; gap: 6px; text-align: left; width: 100%; }
-        .input-group label { font-size: 0.8rem; color: var(--text-muted); padding-left: 4px; }
-        .input-group input { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); padding: 12px; border-radius: 10px; color: #fff; font-size: 1rem; width: 100%; box-sizing: border-box; }
-        
-        .password-input-wrapper { position: relative; width: 100%; }
-        .password-input-wrapper input { padding-right: 48px; }
-        .btn-toggle-password { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.6; }
-        
-        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; box-sizing: border-box; }
-        .btn-primary { height: 56px; border-radius: 12px; font-weight: 700; margin-top: 8px; width: 100%; transition: all 0.2s; }
-        .btn-loading { opacity: 0.7; cursor: not-allowed; }
-        .btn-switch { background: none; color: var(--primary-color); font-size: 0.85rem; margin-top: 10px; }
-      `}</style>
-    </div>
-  );
-}
-
-function ProfileBar({ user, onEdit }) {
-  const h = parseFloat(user.height) / 100;
-  const w = parseFloat(user.weight);
-  const bmi = (w / (h * h)).toFixed(1);
-
-  return (
-    <section className="profile-bar glass-card" onClick={onEdit}>
-      <div className="profile-user">
-        <span className="name">{user.username || 'ゲスト'} 様 <span className="edit-hint">編集 ✎</span></span>
-        <span className="bmi-badge">BMI {bmi}</span>
-      </div>
-      <div className="profile-stats">
-        <span>身長: <span className="stat-val">{user.height} cm</span></span>
-        <span>体重: <span className="stat-val">{user.weight} kg</span></span>
-      </div>
-    </section>
-  );
-}
-
-function NameEditView({ user, onSave, onBack }) {
-  const [username, setUsername] = useState(user.username || '');
-
-  return (
-    <div className="view-record animate-fade">
-      <button className="btn-back" onClick={onBack}>← 戻る</button>
-      <div className="glass-card record-form">
-        <h2>名前を変更</h2>
-        <div className="auth-form" style={{ width: '100%' }}>
-          <div className="input-group">
-            <label>新しいお名前</label>
-            <input 
-              type="text" 
-              value={username} 
-              onChange={(e) => setUsername(e.target.value)} 
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', padding: '12px', borderRadius: '10px', color: '#fff', width: '100%', boxSizing: 'border-box' }}
-            />
-          </div>
-          <button className="btn-primary" style={{ width: '100%', marginTop: '16px' }} onClick={() => onSave({ username })}>
-            変更を保存する
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function WeightForm({ onSubmit, initialData }) {
-  const [weight, setWeight] = useState(initialData?.weight || 20);
-  const [reps, setReps] = useState(initialData?.reps || 10);
-  return (
-    <div className="form-content">
-      <Stepper label="重量 (kg)" value={weight} onChange={setWeight} step={5} min={0} />
-      <Stepper label="回数 (reps)" value={reps} onChange={setReps} step={1} min={1} />
-      <button className="btn-primary full-width" onClick={() => onSubmit({ weight, reps })}>
-        {initialData ? '更新を保存する' : '記録を保存する'}
-      </button>
-      <style jsx>{`.full-width { width: 100%; margin-top: 12px; height: 56px; font-size: 1.1rem; }.form-content { display: flex; flex-direction: column; gap: 24px; }`}</style>
-    </div>
-  );
-}
-
-function InquiryView({ user, onBack }) {
-  const [category, setCategory] = useState('要望');
-  const [message, setMessage] = useState('');
-  const [sending, setSending] = useState(false);
-
-  const handleSend = async () => {
-    if (!message.trim()) return;
-    setSending(true);
-
-    try {
-      await emailjs.send(
-        'service_ozlah6b', 
-        'template_sgyc1qp', 
-        { 
-          to_email: 'cotto7894@icloud.com', // Admin email
-          username: user.username,
-          category: category,
-          message: message,
-          user_email: user.email
-        }, 
-        'j1bMToGV2qz1hk2DN'
-      );
-      alert('送信しました。フィードバックありがとうございます！');
-      onBack();
-    } catch (err) {
-      console.error(err);
-      alert('送信に失敗しました。');
-    } finally {
-      setSending(false);
-    }
-  };
-
-  return (
-    <div className="view-record animate-fade">
-      <button className="btn-back" onClick={onBack}>← 戻る</button>
-      <div className="glass-card record-form">
-        <h2>お問い合わせ</h2>
-        <div className="auth-form" style={{ width: '100%' }}>
-          <div className="input-group">
-            <label>種別</label>
-            <select value={category} onChange={(e) => setCategory(e.target.value)}>
-              <option value="要望">要望 💡</option>
-              <option value="エラー">エラー ⚠️</option>
-              <option value="その他">その他 ✉️</option>
-            </select>
-          </div>
-          <div className="input-group">
-            <label>内容</label>
-            <textarea 
-              rows="5" 
-              value={message} 
-              onChange={(e) => setMessage(e.target.value)} 
-              placeholder="こちらに入力してください..."
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', padding: '12px', borderRadius: '12px', color: '#fff', fontSize: '16px' }}
-            />
-          </div>
-          <button className="btn-primary" onClick={handleSend} disabled={sending} style={{ width: '100%', marginTop: '16px' }}>
-            {sending ? '送信中...' : '送信する'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function AnalysisView({ records, visitLog, user, onUserUpdate }) {
-  const currentYear = new Date().getFullYear();
-  const [wIn, setWIn] = useState(user.weight || '');
-  const [fIn, setFIn] = useState(user.bodyFat || '');
-  
-  const handleQuickSave = async () => {
-    if (!user.uid) return;
-    try {
-      const updatedUser = { ...user, weight: wIn, bodyFat: fIn };
-      await setDoc(doc(db, 'users', user.uid), updatedUser);
-      onUserUpdate(updatedUser);
-      alert('記録を保存しました');
-    } catch (err) { console.error(err); }
-  };
-
-  const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
-  const monthlyCounts = months.map(m => {
-    const count = visitLog.filter(v => {
-      const vDate = new Date(v.timestamp);
-      return vDate.getFullYear() === currentYear && 
-             vDate.toLocaleString('ja-JP', {month: 'short'}) === m;
-    }).length;
-    return { month: m, count };
-  });
-  const maxVisitCount = Math.max(...monthlyCounts.map(m => m.count), 1);
-
-  const weightData = records
-    .filter(r => r.currentWeight)
-    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-    .slice(-10);
-  const weights = weightData.map(d => parseFloat(d.currentWeight));
-  const minW = Math.min(...weights, 0) * 0.9;
-  const maxW = Math.max(...weights, 100) * 1.1;
-
-  return (
-    <div className="view-analysis animate-fade" style={{ padding: '0 8px' }}>
-      <div className="quick-log" style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', marginBottom: '24px' }}>
-        <h4 style={{ margin: '0 0 16px 0', fontSize: '1rem', color: 'var(--primary-color)', fontWeight: 800 }}>本日の測定記録</h4>
-        <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
-          <div style={{ flex: 1 }}>
-            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>体重 (kg)</label>
-            <input type="number" step="0.1" value={wIn} onChange={(e) => setWIn(e.target.value)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '12px', borderRadius: '10px', color: '#fff', width: '100%' }} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>体脂肪 (%)</label>
-            <input type="number" step="0.1" value={fIn} onChange={(e) => setFIn(e.target.value)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '12px', borderRadius: '10px', color: '#fff', width: '100%' }} />
-          </div>
-        </div>
-        <button onClick={handleQuickSave} style={{ width: '100%', height: '44px', background: 'var(--primary-color)', color: '#000', borderRadius: '10px', fontWeight: 700, border: 'none' }}>記録する</button>
-      </div>
-      <div className="glass-card chart-container">
-        <h3>トレーニング回数（月別） ({currentYear}年)</h3>
-        <div className="bar-chart">
-          {monthlyCounts.map((m, i) => (
-            <div key={i} className="bar-column">
-              <div className="bar-val">{m.count > 0 ? m.count : ''}</div>
-              <div className="bar-wrapper">
-                <div className="bar" style={{ height: `${(m.count / maxVisitCount) * 100}%` }}></div>
-              </div>
-              <div className="bar-label">{m.month.replace('月', '')}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="glass-card chart-container">
-        <h3>体重推移 (最新10件)</h3>
-        <TrendChart 
-          data={weightData.map(d => ({ val: parseFloat(d.currentWeight), date: d.date }))} 
-          label="体重 (kg)" 
-          color="#00f2fe" 
-        />
-      </div>
-
-      <style jsx>{`
-        .chart-container { padding: 16px; margin-bottom: 12px; }
-        .bar-chart { display: flex; justify-content: space-around; align-items: flex-end; height: 120px; margin-top: 16px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .bar-column { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 4px; height: 100%; min-width: 15px; }
-        .bar-wrapper { width: 8px; height: 100%; display: flex; align-items: flex-end; background: rgba(255,255,255,0.02); border-radius: 4px; }
-        .bar { width: 100%; background: var(--primary-color); border-radius: 4px 4px 0 0; transition: height 0.6s ease-out; }
-        .bar-val { font-size: 0.6rem; font-weight: 800; color: var(--primary-color); }
-        .bar-label { font-size: 0.6rem; color: var(--text-muted); }
-        .point-val { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 0.65rem; color: #fff; white-space: nowrap; font-weight: 700; }
-      `}</style>
-    </div>
-  );
-}
-
-function TrendChart({ data, label, color = '#ffcc00' }) {
-  if (!data || data.length < 2) return <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>体重の記録が不足しています（2件以上必要）</p>;
-  
-  const width = 300;
-  const height = 120;
-  const padding = 20;
-  const vals = data.map(d => d.val);
-  const min = Math.min(...vals) * 0.98;
-  const max = Math.max(...vals) * 1.02;
-  const range = max - min || 1;
-
-  const points = data.map((d, i) => ({
-    x: padding + (i * (width - padding * 2)) / (data.length - 1),
-    y: height - padding - ((d.val - min) * (height - padding * 2)) / range,
-    val: d.val
-  }));
-
-  let pathD = `M ${points[0].x} ${points[0].y}`;
-  for (let i = 0; i < points.length - 1; i++) {
-    const cp1x = (points[i].x + points[i + 1].x) / 2;
-    pathD += ` C ${cp1x} ${points[i].y}, ${cp1x} ${points[i + 1].y}, ${points[i + 1].x} ${points[i + 1].y}`;
-  }
-
-  const areaD = `${pathD} L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`;
-
-  return (
-    <div className="trend-container">
-      <div className="trend-header">
-        <span className="trend-label">{label}</span>
-        <div className="trend-stats">
-          <span className="min-val">min: {Math.min(...vals).toFixed(1)}</span>
-          <span className="max-val">max: {Math.max(...vals).toFixed(1)}</span>
-        </div>
-      </div>
-      <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" style={{ overflow: 'visible' }}>
-        <defs>
-          <linearGradient id={`grad-${label}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-            <stop offset="100%" stopColor={color} stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="rgba(255,255,255,0.05)" />
-        <path d={areaD} fill={`url(#grad-${label})`} />
-        <path d={pathD} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-        {points.map((p, i) => (
-          <g key={i} className="chart-point-group">
-            <circle cx={p.x} cy={p.y} r="3" fill="#fff" stroke={color} strokeWidth="1.5" />
-            {(i === points.length - 1 || p.val === Math.max(...vals) || p.val === Math.min(...vals)) && (
-              <text x={p.x} y={p.y - 10} textAnchor="middle" fontSize="10" fill="#fff" fontWeight="800">
-                {p.val.toFixed(1)}
-              </text>
-            )}
-          </g>
-        ))}
-      </svg>
-      <style jsx>{`
-        .trend-container { margin-top: 10px; margin-bottom: 20px; }
-        .trend-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .trend-label { font-size: 0.8rem; font-weight: 700; color: rgba(255,255,255,0.5); }
-        .trend-stats { display: flex; gap: 8px; font-size: 0.7rem; color: var(--text-muted); }
-      `}</style>
-    </div>
-  );
-}
-
-function CardioForm({ onSubmit, initialData }) {
-  const [speed, setSpeed] = useState(initialData?.speed || 6.0);
-  const [incline, setIncline] = useState(initialData?.incline || 0);
-  const [time, setTime] = useState(initialData?.time || 20);
-  return (
-    <div className="form-content">
-      <Stepper label="速度 (km/h)" value={speed} onChange={setSpeed} step={0.5} min={0.5} />
-      <Stepper label="傾斜 (%)" value={incline} onChange={setIncline} step={1} min={0} max={15} />
-      <Stepper label="時間 (分)" value={time} onChange={setTime} step={5} min={5} />
-      <button className="btn-primary full-width" onClick={() => onSubmit({ speed, incline, time })}>
-        {initialData ? '更新を保存する' : '記録を保存する'}
-      </button>
-      <style jsx>{`.full-width { width: 100%; margin-top: 12px; height: 56px; font-size: 1.1rem; }.form-content { display: flex; flex-direction: column; gap: 24px; }`}</style>
-    </div>
-  );
-}
-
-function Stepper({ label, value, onChange, step, min, max }) {
-  return (
-    <div className="input-group">
-      <label>{label}</label>
-      <div className="stepper">
-        <button onClick={() => onChange(Math.max(min, Math.round((parseFloat(value) - step) * 10) / 10))}>-</button>
-        <input type="number" value={value} readOnly />
-        <button onClick={() => onChange(max !== undefined ? Math.min(max, Math.round((parseFloat(value) + step) * 10) / 10) : Math.round((parseFloat(value) + step) * 10) / 10)}>+</button>
-      </div>
-      <style jsx>{`
-        .input-group { display: flex; flex-direction: column; gap: 8px; }
-        .input-group label { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; }
-        .stepper { display: flex; align-items: center; background: rgba(255, 255, 255, 0.05); border-radius: 12px; overflow: hidden; border: 1px solid var(--glass-border); }
-        .stepper button { width: 60px; height: 60px; background: none; color: var(--text-main); font-size: 1.5rem; }
-        .stepper input { flex: 1; background: none; border: none; color: var(--text-main); text-align: center; font-size: 1.5rem; font-weight: 700; outline: none; }
       `}</style>
     </div>
   );
