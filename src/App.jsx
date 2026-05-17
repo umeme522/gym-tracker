@@ -560,63 +560,63 @@ function App() {
             <h2>履歴</h2>
             <div className="history-list">
               {[...visitLog, ...records].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).map((item) => (
-                <div key={item.id} className={`glass-card history-item ${item.type === 'visit-summary' ? 'visit-log-summary' : ''}`}>
+                <div key={item.id} className={`glass-card history-item ${item.type === 'visit-summary' ? 'visit-log-summary' : ''}`} style={{ padding: item.type === 'visit-summary' ? '0' : '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {item.type === 'visit-summary' ? (
-                    <div className="visit-summary-content">
-                      <div className="visit-header-simple">
-                        <div className="visit-time-range">
+                    <div className="visit-summary-content" style={{ width: '100%' }}>
+                      <div className="visit-header-simple" style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
+                        <div className="visit-time-range" style={{ fontSize: '0.9rem', fontWeight: '700', color: '#fff' }}>
                           {new Date(item.startTime).toLocaleString('ja-JP', {month:'short', day:'numeric', hour: '2-digit', minute:'2-digit'})} 
                           ～ 
                           {new Date(item.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                         </div>
-                        <div className="visit-duration-simple">{item.duration}分</div>
+                        <div className="visit-duration-simple" style={{ fontSize: '0.85rem', color: 'var(--primary-color)', fontWeight: '800', marginLeft: 'auto', marginRight: '12px' }}>{item.duration}分</div>
                         <div className="visit-actions-simple">
                           <button className="btn-icon-delete" onClick={() => {
                             const dateStr = new Date(item.startTime).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' });
                             handleDeleteRecord(item.id, null, true, `${dateStr} の滞在記録全体`);
-                          }}>✕</button>
+                          }} style={{ background: 'none', color: 'var(--danger-color)', fontSize: '0.95rem', border: 'none', cursor: 'pointer', padding: '4px' }}>✕</button>
                         </div>
                       </div>
                       
-                      <div className="visit-records-simple">
+                      <div className="visit-records-simple" style={{ padding: '8px 16px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {item.records.map(rec => (
-                          <div key={rec.id} className="visit-rec-row-simple">
-                            <span className="rec-name-simple">{rec.machineName}</span>
-                            <span className="rec-val-simple">
+                          <div key={rec.id} className="visit-rec-row-simple" style={{ display: 'flex', flexDirection: 'column', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.03)', gap: '4px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                              <span className="rec-name-simple" style={{ fontWeight: '700', color: '#fff', fontSize: '0.9rem' }}>{rec.machineName}</span>
+                              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                <button className="btn-rec-edit" onClick={() => handleEditRecord(rec, item.id)} style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', padding: '4px', fontSize: '0.95rem' }}>✎</button>
+                                <button className="btn-rec-delete" onClick={() => handleDeleteRecord(rec.id || rec.timestamp, item.id, false, `${rec.machineName} の記録`)} style={{ background: 'none', border: 'none', color: 'var(--danger-color)', cursor: 'pointer', padding: '4px', fontSize: '0.95rem' }}>✕</button>
+                              </div>
+                            </div>
+                            <div className="rec-val-simple" style={{ fontSize: '0.85rem', color: 'var(--primary-color)', fontWeight: '700' }}>
                               {rec.weight !== undefined ? `${rec.weight}kg / ${rec.reps}回 × ${rec.sets || 3}set` : `${rec.speed}km/h / ${rec.time}分`}
-                            </span>
-                            <button className="btn-rec-edit" onClick={() => handleEditRecord(rec, item.id)}>✎</button>
-                            <button className="btn-rec-delete" onClick={() => handleDeleteRecord(rec.id || rec.timestamp, item.id, false, `${rec.machineName} の記録`)} style={{ background: 'none', color: 'var(--danger-color)', border: 'none', marginLeft: '8px', cursor: 'pointer', padding: '2px 6px', fontSize: '0.85rem' }}>✕</button>
+                            </div>
                           </div>
                         ))}
                       </div>
                     </div>
                   ) : (
-                    <React.Fragment>
-                      <div className="item-info">
-                        <div className="item-header-row">
-                          <span className="item-name">{item.machineName}</span>
-                          <div className="item-actions">
-                            <button className="btn-icon-edit" onClick={() => handleEditRecord(item)}>✎</button>
-                            <button className="btn-icon-delete" onClick={() => handleDeleteRecord(item.id, null, false, `${item.machineName} の記録`)}>✕</button>
-                          </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '6px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <span className="item-name" style={{ fontWeight: '700', color: '#fff', fontSize: '1rem' }}>{item.machineName}</span>
+                          <span className="item-date" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {new Date(item.timestamp).toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </span>
                         </div>
-                        <span className="item-date">{new Date(item.timestamp).toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        <div className="item-actions" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                          <button className="btn-icon-edit" onClick={() => handleEditRecord(item)} style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', padding: '4px', fontSize: '0.95rem' }}>✎</button>
+                          <button className="btn-icon-delete" onClick={() => handleDeleteRecord(item.id, null, false, `${item.machineName} の記録`)} style={{ background: 'none', border: 'none', color: 'var(--danger-color)', cursor: 'pointer', padding: '4px', fontSize: '0.95rem' }}>✕</button>
+                        </div>
                       </div>
-                      <div className="item-data">
+                      <div className="item-data-simple" style={{ fontSize: '0.85rem', color: 'var(--primary-color)', fontWeight: '700', marginTop: '2px' }}>
                         {item.weight !== undefined ? (
-                          <React.Fragment>
-                            <span className="item-weight">{item.weight} kg</span>
-                            <span className="item-reps">{item.reps} 回 × {item.sets || 3}set</span>
-                          </React.Fragment>
+                          <span>{item.weight}kg / {item.reps}回 × {item.sets || 3}set</span>
                         ) : (
-                          <React.Fragment>
-                            <span className="item-speed">{item.speed} km/h</span>
-                            <span className="item-time">{item.time} 分</span>
-                          </React.Fragment>
+                          <span>{item.speed}km/h / {item.time}分</span>
                         )}
                       </div>
-                    </React.Fragment>
+                    </div>
                   )}
                 </div>
               ))}
