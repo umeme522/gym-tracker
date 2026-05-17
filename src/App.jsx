@@ -233,7 +233,9 @@ function App() {
 
   const handleAddRecord = async (data) => {
     if (!user) return;
+    const uniqueId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString() + Math.random().toString(36).substring(2, 9);
     const newRecord = {
+      id: uniqueId,
       machineId: selectedMachine.id,
       machineName: selectedMachine.name,
       ...data,
@@ -259,13 +261,21 @@ function App() {
     try {
       if (editingRecord.visitId) {
         const visitRef = doc(db, 'users', user.uid, 'visitLogs', editingRecord.visitId);
-        const visitDoc = await getDoc(visitRef);
-        if (visitDoc.exists()) {
-          const updatedRecords = visitDoc.data().records.map(r => 
-            r.id === editingRecord.id ? { ...r, ...data } : r
-          );
-          await updateDoc(visitRef, { records: updatedRecords });
-        }
+         const visitDoc = await getDoc(visitRef);
+         if (visitDoc.exists()) {
+           const updatedRecords = visitDoc.data().records.map(r => 
+             r.id === editingRecord.id ? { ...r, ...data } : r
+           );
+           await updateDoc(visitRef, { records: updatedRecords });
+         }
+      } else if (currentVisit && tempVisitRecords.some(r => r.id === editingRecord.id)) {
+        const updatedRecords = tempVisitRecords.map(r => 
+          r.id === editingRecord.id ? { ...r, ...data } : r
+        );
+        setTempVisitRecords(updatedRecords);
+        setEditingRecord(null);
+        setView('home');
+        return;
       } else {
         await updateDoc(doc(db, 'users', user.uid, 'records', editingRecord.id), data);
       }
@@ -386,12 +396,46 @@ function App() {
             </div>
             
             {currentVisit ? (
-              <button className="btn-out-wide" onClick={handleCheckOut}>
-                トレーニング終了 👋
-                <small style={{display:'block', fontSize:'0.7rem', opacity:0.6, marginTop:4}}>
-                  {new Date(currentVisit.startTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} 開始
-                </small>
-              </button>
+              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <button className="btn-out-wide" onClick={handleCheckOut}>
+                  トレーニング終了 👋
+                  <small style={{display:'block', fontSize:'0.7rem', opacity:0.6, marginTop:4}}>
+                    {new Date(currentVisit.startTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} 開始
+                  </small>
+                </button>
+
+                {tempVisitRecords.length > 0 && (
+                  <div className="temp-records-section animate-fade" style={{ marginBottom: '12px' }}>
+                    <h4 style={{ fontSize: '0.95rem', color: 'var(--primary-color)', margin: '8px 0 12px 0', fontWeight: 800 }}>本日の実施済みワークアウト</h4>
+                    <div className="history-list">
+                      {tempVisitRecords.map((rec) => (
+                        <div key={rec.id} className="glass-card history-item" style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                          <div className="item-info" style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                            <div className="item-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                              <span className="item-name" style={{ fontWeight: '600' }}>{rec.machineName}</span>
+                              <div className="item-actions" style={{ display: 'flex', gap: '12px' }}>
+                                <button className="btn-rec-edit" onClick={() => handleEditRecord(rec)} style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', fontSize: '0.9rem', padding: 0 }}>✎</button>
+                                <button className="btn-icon-delete" onClick={() => {
+                                  if (window.confirm('この記録を削除しますか？')) {
+                                    setTempVisitRecords(tempVisitRecords.filter(r => r.id !== rec.id));
+                                  }
+                                }} style={{ background: 'none', border: 'none', color: 'var(--danger-color)', cursor: 'pointer', fontSize: '0.9rem', padding: 0 }}>✕</button>
+                              </div>
+                            </div>
+                            <div className="item-data" style={{ display: 'flex', gap: '12px', color: 'var(--primary-color)', fontWeight: '700', marginTop: '4px', justifyContent: 'flex-start' }}>
+                              {rec.weight !== undefined ? (
+                                <span style={{ fontSize: '0.9rem' }}>{rec.weight} kg / {rec.reps} 回 × {rec.sets || 3}セット</span>
+                              ) : (
+                                <span style={{ fontSize: '0.9rem' }}>{rec.speed} km/h / {rec.time} 分</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <button className="btn-in-wide" onClick={handleCheckIn}>トレーニング開始 💪</button>
             )}
@@ -425,6 +469,7 @@ function App() {
                 <h2>{selectedMachine.name}</h2>
                 <div className="last-record-hint">
                   前回データ: {getLastRecord(selectedMachine.id) ? (
+                    getLastRecord(selectedMachine.id).speed !== undefined
                       ? `${getLastRecord(selectedMachine.id).speed}km/h - ${getLastRecord(selectedMachine.id).time}分`
                       : `${getLastRecord(selectedMachine.id).weight}kg - ${getLastRecord(selectedMachine.id).reps}回 × ${getLastRecord(selectedMachine.id).sets || 3}セット`
                   ) : 'なし'}
@@ -452,7 +497,10 @@ function App() {
 
         {view === 'record-edit' && selectedMachine && editingRecord && (
           <div className="view-record animate-fade">
-            <button className="btn-back" onClick={() => { setView('history'); setEditingRecord(null); }}>← 戻る</button>
+            <button className="btn-back" onClick={() => { 
+              setView(editingRecord.visitId ? 'history' : (currentVisit ? 'home' : 'history')); 
+              setEditingRecord(null); 
+            }}>← 戻る</button>
             <div className="glass-card record-form">
               <div className="form-header">
                 <h2>{selectedMachine.name} (編集)</h2>
