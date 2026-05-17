@@ -56,6 +56,7 @@ function App() {
   const [lastWorkoutSummary, setLastWorkoutSummary] = useState(null);
   const [tempVisitRecords, setTempVisitRecords] = useLocalStorage('gym-temp-visit-records', []);
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState(null); // { id, visitId, isVisit, label }
 
   // Sync with Firebase Auth
   useEffect(() => {
@@ -289,29 +290,34 @@ function App() {
     }
   };
 
-  const handleDeleteRecord = async (id, visitId = null, isVisit = false) => {
-    if (!user) return;
-    if (window.confirm(isVisit ? 'この滞在記録全体を削除しますか？' : 'この記録を削除しますか？')) {
-      try {
-        if (isVisit) {
-          await deleteDoc(doc(db, 'users', user.uid, 'visitLogs', id));
-        } else if (visitId) {
-          const visitRef = doc(db, 'users', user.uid, 'visitLogs', visitId);
-          const visitDoc = await getDoc(visitRef);
-          if (visitDoc.exists()) {
-            const updatedRecords = visitDoc.data().records.filter(r => {
-              const recordId = r.id || r.timestamp;
-              return recordId !== id;
-            });
-            await updateDoc(visitRef, { records: updatedRecords });
-          }
-        } else {
-          await deleteDoc(doc(db, 'users', user.uid, 'records', id));
+  const handleDeleteRecord = (id, visitId = null, isVisit = false, label = "この記録") => {
+    setDeleteTarget({ id, visitId, isVisit, label });
+  };
+
+  const executeDelete = async () => {
+    if (!user || !deleteTarget) return;
+    const { id, visitId, isVisit } = deleteTarget;
+    try {
+      if (isVisit) {
+        await deleteDoc(doc(db, 'users', user.uid, 'visitLogs', id));
+      } else if (visitId) {
+        const visitRef = doc(db, 'users', user.uid, 'visitLogs', visitId);
+        const visitDoc = await getDoc(visitRef);
+        if (visitDoc.exists()) {
+          const updatedRecords = visitDoc.data().records.filter(r => {
+            const recordId = r.id || r.timestamp;
+            return recordId !== id;
+          });
+          await updateDoc(visitRef, { records: updatedRecords });
         }
-      } catch (err) {
-        console.error(err);
-        alert('削除に失敗しました。');
+      } else {
+        await deleteDoc(doc(db, 'users', user.uid, 'records', id));
       }
+    } catch (err) {
+      console.error(err);
+      alert('削除に失敗しました。');
+    } finally {
+      setDeleteTarget(null);
     }
   };
 
@@ -565,7 +571,10 @@ function App() {
                         </div>
                         <div className="visit-duration-simple">{item.duration}分</div>
                         <div className="visit-actions-simple">
-                          <button className="btn-icon-delete" onClick={() => handleDeleteRecord(item.id, null, true)}>✕</button>
+                          <button className="btn-icon-delete" onClick={() => {
+                            const dateStr = new Date(item.startTime).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' });
+                            handleDeleteRecord(item.id, null, true, `${dateStr} の滞在記録全体`);
+                          }}>✕</button>
                         </div>
                       </div>
                       
@@ -577,7 +586,7 @@ function App() {
                               {rec.weight !== undefined ? `${rec.weight}kg / ${rec.reps}回 × ${rec.sets || 3}set` : `${rec.speed}km/h / ${rec.time}分`}
                             </span>
                             <button className="btn-rec-edit" onClick={() => handleEditRecord(rec, item.id)}>✎</button>
-                            <button className="btn-rec-delete" onClick={() => handleDeleteRecord(rec.id || rec.timestamp, item.id)} style={{ background: 'none', color: 'var(--danger-color)', border: 'none', marginLeft: '8px', cursor: 'pointer', padding: '2px 6px', fontSize: '0.85rem' }}>✕</button>
+                            <button className="btn-rec-delete" onClick={() => handleDeleteRecord(rec.id || rec.timestamp, item.id, false, `${rec.machineName} の記録`)} style={{ background: 'none', color: 'var(--danger-color)', border: 'none', marginLeft: '8px', cursor: 'pointer', padding: '2px 6px', fontSize: '0.85rem' }}>✕</button>
                           </div>
                         ))}
                       </div>
@@ -589,7 +598,7 @@ function App() {
                           <span className="item-name">{item.machineName}</span>
                           <div className="item-actions">
                             <button className="btn-icon-edit" onClick={() => handleEditRecord(item)}>✎</button>
-                            <button className="btn-icon-delete" onClick={() => handleDeleteRecord(item.id)}>✕</button>
+                            <button className="btn-icon-delete" onClick={() => handleDeleteRecord(item.id, null, false, `${item.machineName} の記録`)}>✕</button>
                           </div>
                         </div>
                         <span className="item-date">{new Date(item.timestamp).toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
@@ -627,7 +636,34 @@ function App() {
         </nav>
       )}
 
+      {deleteTarget && (
+        <div className="modal-overlay animate-fade">
+          <div className="glass-card modal-content" style={{ background: 'rgba(20, 20, 20, 0.95)', border: '1px solid rgba(255, 75, 75, 0.2)', padding: '24px', borderRadius: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%', maxWidth: '300px' }}>
+            <h3 style={{ margin: '0 0 12px 0', fontSize: '1.2rem', color: '#ff4b4b', fontWeight: 800 }}>削除の確認</h3>
+            <p style={{ margin: '0 0 20px 0', fontSize: '0.95rem', color: '#eee', lineHeight: 1.5 }}>
+              {deleteTarget.label}を削除してもよろしいですか？<br />
+              <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>この操作は取り消せません。</span>
+            </p>
+            <div className="modal-actions" style={{ display: 'flex', gap: '12px', width: '100%' }}>
+              <button 
+                onClick={() => setDeleteTarget(null)} 
+                style={{ flex: 1, height: '44px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--glass-border)', fontWeight: 600, cursor: 'pointer' }}
+              >
+                キャンセル
+              </button>
+              <button 
+                onClick={executeDelete} 
+                style={{ flex: 1, height: '44px', borderRadius: '10px', background: '#ff4b4b', color: '#fff', border: 'none', fontWeight: 700, cursor: 'pointer' }}
+              >
+                削除する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; backdrop-filter: blur(8px); }
         .app-container { width: 100%; max-width: 500px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; background: var(--bg-dark); position: relative; padding: 16px; padding-bottom: calc(80px + env(safe-area-inset-bottom)); padding-top: env(safe-area-inset-top); box-sizing: border-box; }
         .app-main { flex: 1; display: flex; flex-direction: column; gap: 12px; }
         .app-header h1 { font-size: 1.4rem; color: var(--primary-color); font-weight: 800; letter-spacing: 1px; margin: 0; }
