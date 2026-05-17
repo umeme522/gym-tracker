@@ -263,14 +263,16 @@ function App() {
         const visitRef = doc(db, 'users', user.uid, 'visitLogs', editingRecord.visitId);
          const visitDoc = await getDoc(visitRef);
          if (visitDoc.exists()) {
-           const updatedRecords = visitDoc.data().records.map(r => 
-             r.id === editingRecord.id ? { ...r, ...data } : r
-           );
+           const updatedRecords = visitDoc.data().records.map(r => {
+             const recordId = r.id || r.timestamp;
+             const targetId = editingRecord.id || editingRecord.timestamp;
+             return recordId === targetId ? { ...r, ...data } : r;
+           });
            await updateDoc(visitRef, { records: updatedRecords });
          }
-      } else if (currentVisit && tempVisitRecords.some(r => r.id === editingRecord.id)) {
+      } else if (currentVisit && tempVisitRecords.some(r => (r.id || r.timestamp) === (editingRecord.id || editingRecord.timestamp))) {
         const updatedRecords = tempVisitRecords.map(r => 
-          r.id === editingRecord.id ? { ...r, ...data } : r
+          (r.id || r.timestamp) === (editingRecord.id || editingRecord.timestamp) ? { ...r, ...data } : r
         );
         setTempVisitRecords(updatedRecords);
         setEditingRecord(null);
@@ -297,7 +299,10 @@ function App() {
           const visitRef = doc(db, 'users', user.uid, 'visitLogs', visitId);
           const visitDoc = await getDoc(visitRef);
           if (visitDoc.exists()) {
-            const updatedRecords = visitDoc.data().records.filter(r => r.id !== id);
+            const updatedRecords = visitDoc.data().records.filter(r => {
+              const recordId = r.id || r.timestamp;
+              return recordId !== id;
+            });
             await updateDoc(visitRef, { records: updatedRecords });
           }
         } else {
@@ -572,6 +577,7 @@ function App() {
                               {rec.weight !== undefined ? `${rec.weight}kg / ${rec.reps}回 × ${rec.sets || 3}set` : `${rec.speed}km/h / ${rec.time}分`}
                             </span>
                             <button className="btn-rec-edit" onClick={() => handleEditRecord(rec, item.id)}>✎</button>
+                            <button className="btn-rec-delete" onClick={() => handleDeleteRecord(rec.id || rec.timestamp, item.id)} style={{ background: 'none', color: 'var(--danger-color)', border: 'none', marginLeft: '8px', cursor: 'pointer', padding: '2px 6px', fontSize: '0.85rem' }}>✕</button>
                           </div>
                         ))}
                       </div>
